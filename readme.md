@@ -1,58 +1,52 @@
 # Keystone
 
-Keystone is MRG’s foundation framework for building modular systems with clear boundaries between business logic, data access, and orchestration.
+Keystone is MRG's foundation framework for building modular systems with clear boundaries between business logic, data access, and orchestration.
 
-# Why Keystone exists
+## Why Keystone Exists
 
-- Keep “business” and “data” separated by design, not by convention.
-- Make orchestration explicit, so flows are testable and readable.
-- Standardize project structure so new services/modules are predictable.
+- Keep "business" and "data" separated by design, not by convention
+- Make orchestration explicit, so flows are testable and readable
+- Standardize project structure so new services/modules are predictable
 
-# Status
+## Status
 
 Keystone is under active development. APIs and conventions may change until v1.
 
-# Suite Map
+## Suite Map
 
 ```
 keystone-suite/
 ├── keystone/            # Backend specific logic (Danet)
-├── keystone-ui/         # Frontend Logic (Freshjs)
+├── keystone-ui/         # Frontend logic (Freshjs)
 ├── keystone-cli/        # Tools to make development easier
 ├── keystone-prototypes/ # Exploratory repo, items built here then moved to keystone
-└── keystone-docs/       # Suite Docs
+└── keystone-docs/       # Suite docs
 ```
 
-# Imports
+## Imports
 
 - Use `import_map` in `deno.json` for all imports
 - Prefer absolute aliases for cross-domain references
 - Use relative imports within polymorphic features
 
-## Aliases
+### Aliases
 
-    - internal imports are prefixed with "@"
-    - external imports are prefixed with "#"
-    - all node imports are bare imports
-
-## Examples
-
-    - @<module-name>/dto
-    - fs (for node:fs)
-    - #date-fns (for npm:date-fns)
+| Prefix | Type | Example |
+|--------|------|---------|
+| `@` | Internal imports | `@<module-name>/dto` |
+| `#` | External npm imports | `#date-fns` |
+| (bare) | Node built-ins | `fs` (for `node:fs`) |
 
 ## Testing
 
-tests are always to be flat with no steps that depend on anything else
-meaning they are self contained and always run the same logic.
+Tests must be flat and self-contained with no steps that depend on anything else. Each test should always run the same logic in isolation.
 
-# Quick start
+## Quick Start
 
-## Install the cli
+### Install the CLI
 
-## Setup
+### Setup
 
-# Environments and secrets
+## Environments and Secrets
 
-You can use the keystone cli to sync your environment files where you can find
-any secrets you need
+You can use the Keystone CLI to sync your environment files where you can find any secrets you need.
