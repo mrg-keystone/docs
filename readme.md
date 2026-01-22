@@ -46,8 +46,42 @@ tests must not have loops. they must be explicit in their execution.
 
 ### Install the CLI
 
+```bash
+npm install -g @mrg-keystone/cli
+```
+
 ### Setup
+
+Clone all keystone-suite repositories:
+
+```bash
+keystone init [path]
+```
+
+This will clone all repositories into a `keystone-suite` directory at the specified path (defaults to current directory).
 
 ## Environments and Secrets
 
-You can use the Keystone CLI to sync your environment files where you can find any secrets you need.
+The Keystone CLI syncs environment files from [Envault](https://github.com/envault/envault), a self-hosted .env sharing tool.
+
+### Configure an environment
+
+1. Log into [Envault](https://envault-deploy.ngrok.app)
+2. Navigate to your app and select the environment
+3. Copy the setup command shown under **"Set up this app"** and run it
+
+The command is pre-filled with your environment details and includes a rotating key.
+
+### Pull environment variables
+
+```bash
+keystone env pull <envName>
+```
+
+This pulls variables and saves them to a `.env` file in the current directory.
+
+### List configured environments
+
+```bash
+keystone env list
+```
