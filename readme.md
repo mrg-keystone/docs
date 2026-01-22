@@ -31,15 +31,16 @@ keystone-suite/
 
 ### Aliases
 
-| Prefix | Type | Example |
-|--------|------|---------|
-| `@` | Internal imports | `@<module-name>/dto` |
-| `#` | External npm imports | `#date-fns` |
-| (bare) | Node built-ins | `fs` (for `node:fs`) |
+| Prefix | Type                 | Example              |
+| ------ | -------------------- | -------------------- |
+| `@`    | Internal imports     | `@<module-name>/dto` |
+| `#`    | External npm imports | `#date-fns`          |
+| (bare) | Node built-ins       | `fs` (for `node:fs`) |
 
 ## Testing
 
 Tests must be flat and self-contained with no steps that depend on anything else. Each test should always run the same logic in isolation.
+tests must not have loops. they must be explicit in their execution.
 
 ## Quick Start
 
