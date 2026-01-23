@@ -42,6 +42,68 @@ keystone-suite/
 Tests must be flat and self-contained with no steps that depend on anything else. Each test should always run the same logic in isolation.
 tests must not have loops. they must be explicit in their execution.
 
+## Security and Configs
+
+Keystone draws a hard line between **secrets** and **application configuration**.
+
+### Secrets (Top-level `.env`)
+
+- All secrets live in a single `.env` file at the **git root**
+- This file is **never committed**
+- It may contain credentials such as:
+
+  - API keys (OpenAI, Stripe, etc.)
+  - Database passwords
+  - Service tokens
+
+- Secrets are shared and synchronized via **Envault**, not duplicated per app
+
+```
+keystone-suite/
+├── .env                # secrets only (gitignored)
+├── keystone/
+├── keystone-ui/
+└── keystone-cli/
+```
+
+This ensures:
+
+- one source of truth for sensitive values
+- no secret sprawl across workspace members
+- predictable secret loading in local, CI, and production environments
+
+---
+
+### Application Config (Workspace-level `.env`)
+
+- Each workspace member **may** define its own `.env` file
+- These files are for **non-sensitive configuration only**
+- These files must have an "example-env" in the workspace root
+- Examples:
+
+  - ports
+  - feature flags
+  - log levels
+  - environment-specific toggles
+
+```
+keystone/
+├── deno.json
+├── .env                # app config only (no secrets)
+├── example-env
+└── src/
+```
+
+---
+
+### Rule of Thumb
+
+- If leaking it would be _annoying_ → workspace `.env`
+- If leaking it would be _expensive or dangerous_ → root `.env`
+
+Secrets flow **downward** from the root.
+Configs stay **local** to the app that owns them.
+
 ## Quick Start
 
 ### Install the CLI
