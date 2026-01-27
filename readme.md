@@ -108,13 +108,14 @@ Configs stay **local** to the app that owns them.
 
 All external API integrations are tested and documented using [Bruno](https://www.usebruno.com/), an open source API client.
 
-Each API collection is stored in its own folder under `external-apis/`:
+Each API gets its own Bruno collection under `external-apis/`:
 
 ```
 external-apis/
-├── bruno.json           # Root collection config
-├── stripe/              # Stripe API requests
-├── openai/              # OpenAI API requests
+├── stripe/
+│   └── bruno.json
+├── openai/
+│   └── bruno.json
 └── ...
 ```
 
