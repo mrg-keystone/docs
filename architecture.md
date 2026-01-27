@@ -64,6 +64,7 @@ The **inbound boundary** where users interact with the application. This can be 
 ### Barrel Exports
 
 Only use barrel exports on:
+
 - Polymorphic `<feature-name>.mod.ts` files
 - `bootstrap.ts` files
 
