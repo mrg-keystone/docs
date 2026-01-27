@@ -104,6 +104,28 @@ keystone/
 Secrets flow **downward** from the root.
 Configs stay **local** to the app that owns them.
 
+## External APIs
+
+All external API integrations are tested and documented using [Bruno](https://www.usebruno.com/), an open source API client.
+
+Each API collection is stored in its own folder under `external-apis/`:
+
+```
+external-apis/
+├── bruno.json           # Root collection config
+├── stripe/              # Stripe API requests
+├── openai/              # OpenAI API requests
+└── ...
+```
+
+This approach:
+
+- Version controls API requests alongside documentation
+- Provides reproducible API testing without proprietary cloud sync
+- Keeps request collections portable and shareable
+
+To use: open the `external-apis/` folder in Bruno.
+
 ## Quick Start
 
 ### Install the CLI
