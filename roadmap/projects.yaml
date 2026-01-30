@@ -1,8 +1,8 @@
 projects:
   - name: Recordings App
     milestones:
-      kickoff: 2026-03-04
-      software: 2026-03-18
+      kickoff: 2026-02-04
+      software: 2026-02-18
       meeting: 2026-02-25
       poc_delivery: 2026-03-02
       integration: 2026-03-04
