@@ -1,0 +1,262 @@
+KEYSTONE SUITE DOCUMENTATION
+=============================
+
+Source: docs/readme.md, docs/technical/*.md
+Generated for LLM consumption
+
+-------------------------------------------------------------------------------
+OVERVIEW
+-------------------------------------------------------------------------------
+
+Keystone is MRG's foundation framework for building modular systems with clear
+boundaries between business logic, data access, and orchestration.
+
+Why Keystone Exists:
+- Keep "business" and "data" separated by design, not by convention
+- Make orchestration explicit, so flows are testable and readable
+- Standardize project structure so new services/modules are predictable
+
+Status: Keystone is under active development. APIs and conventions may change until v1.
+
+Suite Map:
+  keystone-suite/
+  ├── keystone/            # Backend specific logic (Danet)
+  ├── keystone-ui/         # Frontend logic (Freshjs)
+  ├── keystone-cli/        # Tools to make development easier
+  ├── keystone-prototypes/ # Exploratory repo, items built here then moved to keystone
+  └── keystone-docs/       # Suite docs
+
+-------------------------------------------------------------------------------
+IMPORTS
+-------------------------------------------------------------------------------
+
+- Use import_map in deno.json for all imports
+- Prefer absolute aliases for cross-domain references
+- Use relative imports within polymorphic features
+
+Aliases:
+  @      Internal imports      @<module-name>/dto
+  #      External npm imports  #date-fns
+  (bare) Node built-ins        fs (for node:fs)
+
+-------------------------------------------------------------------------------
+ARCHITECTURE
+-------------------------------------------------------------------------------
+
+Source: docs/technical/architecture.md
+
+Directory Structure:
+
+  <app-name>/
+  ├── src/
+  │   ├── bootstrap.ts                    # Module entry point and exports
+  │   ├── domain/
+  │   │   ├── business/                   # Pure business logic
+  │   │   │   └── <feature-name>/
+  │   │   │       ├── <feature-name>.mod.ts
+  │   │   │       └── <feature-name>.test.ts    # Unit tests
+  │   │   ├── data/                       # Impure data/integration logic
+  │   │   │   └── <feature-name>.mod.ts
+  │   │   └── coordinators/               # Application layer orchestrators
+  │   │       └── <process-name>/
+  │   │           ├── <process-name>.mod.ts
+  │   │           └── <process-name>.test.ts    # Integration tests
+  │   └── entrypoints/                    # Inbound boundary (controllers/pages/CLI)
+  │       └── <entrypoint-name>/
+  │           ├── mod.ts
+  │           └── test.ts                 # E2E tests
+  ├── dto/
+  │   └── <dto-name>.ts
+  └── deno.json
+
+Logic Classification:
+
+  BUSINESS LOGIC: Pure application logic. Cannot have imports from outside of
+  the dto/ folder. This is where domain rules live and can be unit tested in
+  isolation.
+
+  DATA LOGIC: Impure functionality that handles external interactions. When
+  extracting this from prototypes, keep it as thin as possible. Cannot have
+  imports outside of the dto/ folder. This is the outbound boundary of the
+  application.
+
+  COORDINATORS: Join business and data logic using a sandwich pattern:
+    1. Outer function (data) — handles setup, fetching data, and side effects
+    2. Inner function (business) — defines the pure business logic
+
+  Flow: get data → pass to business logic → persist results or make external calls
+
+Boundaries:
+
+  DTOs: Data Transfer Objects are the boundaries. They use class-validator and
+  class-transformer libraries to enforce runtime type safety and provide IDE types.
+
+  ENTRYPOINTS: The inbound boundary where users interact with the application.
+  This can be controllers, routes, or exports.
+
+  BARREL EXPORTS: Only use barrel exports on:
+    - Polymorphic <feature-name>.mod.ts files
+    - bootstrap.ts files
+
+Polymorphic Pattern (for features with swappable implementations):
+
+  <feature-name>/
+  ├── base/                           # Abstract class
+  │   ├── <feature-name>.base.ts
+  │   └── test.ts
+  ├── implementations/                # Concrete classes
+  │   ├── variant-a/
+  │   │   ├── variant-a.mod.ts
+  │   │   └── test.ts
+  │   └── variant-b/
+  │       ├── variant-b.mod.ts
+  │       └── test.ts
+  └── <feature-name>.mod.ts           # Barrel export for active implementation
+
+-------------------------------------------------------------------------------
+TESTING
+-------------------------------------------------------------------------------
+
+Tests must be flat and self-contained with no steps that depend on anything
+else. Each test should always run the same logic in isolation. Tests must not
+have loops. They must be explicit in their execution.
+
+  Layer           Test Type     Purpose
+  --------------- ------------- ------------------------------------------
+  business/       Unit          Test pure logic in isolation
+  coordinators/   Integration   Test orchestration with mocked externals
+  entrypoints/    E2E           Test full cycle
+
+-------------------------------------------------------------------------------
+INFRASTRUCTURE
+-------------------------------------------------------------------------------
+
+Source: docs/technical/infrastructure.md
+
+Runtime: All code runs on Deno with TypeScript. No Node.js, no Bun.
+
+Frameworks:
+  Layer      Framework
+  --------   -----------
+  Frontend   Deno Fresh
+  Backend    Danet
+
+Hosting:
+
+  PRIMARY: DENO DEPLOY
+  - Edge-native, globally distributed
+  - Zero-config deployments from git
+  - Native Deno support
+
+  SUPPLEMENTARY SERVICES:
+  Need              Service
+  ----------------- --------------
+  Object storage    AWS S3
+  AI/ML inference   Amazon Bedrock
+  Relational DB     Supabase
+  Background jobs   External queue
+
+  Keep supplementary services minimal. Prefer Deno Deploy-native solutions.
+
+Git Strategy:
+
+  Branch        Purpose                           Protected
+  ------------- --------------------------------- ---------
+  main          Production, auto-deploys          Yes
+  develop       Staging and integration testing   Yes
+  feature/*     New features                      No
+  hotfix/*      Urgent production fixes           No
+
+  Flow:
+    feature/xyz ──┐
+                  ├──► develop ──► main
+    feature/abc ──┘
+
+  1. Create feature branches from develop
+  2. Open PR to merge into develop
+  3. Test and validate on staging
+  4. PR from develop into main for release
+
+  Deployments:
+    main:    Deno Deploy watches this branch. Every commit triggers production.
+    develop: Used for staging environment and integration testing.
+
+  Hotfixes (automated flow):
+    hotfix/critical-bug ──► develop ──► main
+
+  Rules:
+    - Never commit directly to main or develop
+    - All changes go through PRs
+    - Feature branches must be up-to-date with develop before merge
+    - Delete branches after merge
+
+-------------------------------------------------------------------------------
+SECURITY AND CONFIGS
+-------------------------------------------------------------------------------
+
+Keystone draws a hard line between secrets and application configuration.
+
+SECRETS (Top-level .env):
+  - All secrets live in a single .env file at the git root
+  - This file is never committed
+  - Contains: API keys, database passwords, service tokens
+  - Synced via Envault
+
+  keystone-suite/
+  ├── .env                # secrets only (gitignored)
+  ├── keystone/
+  ├── keystone-ui/
+  └── keystone-cli/
+
+APPLICATION CONFIG (Workspace-level .env):
+  - Each workspace member may define its own .env file
+  - For non-sensitive configuration only
+  - Must have an "example-env" in the workspace root
+  - Examples: ports, feature flags, log levels, environment toggles
+
+RULE OF THUMB:
+  - Leaking would be annoying → workspace .env
+  - Leaking would be expensive or dangerous → root .env
+
+Secrets flow downward from root. Configs stay local to the app that owns them.
+
+-------------------------------------------------------------------------------
+EXTERNAL APIs
+-------------------------------------------------------------------------------
+
+All external API integrations are tested and documented using Bruno (open source).
+
+  external-apis/
+  ├── stripe/
+  │   └── bruno.json
+  ├── openai/
+  │   └── bruno.json
+  └── ...
+
+Benefits:
+  - Version controls API requests alongside documentation
+  - Provides reproducible API testing without proprietary cloud sync
+  - Keeps request collections portable and shareable
+
+-------------------------------------------------------------------------------
+QUICK START
+-------------------------------------------------------------------------------
+
+Install the CLI:
+  npm install -g @mrg-keystone/cli
+
+Setup (clone all keystone-suite repositories):
+  keystone init [path]
+
+Environments and Secrets (via Envault):
+
+  Configure an environment:
+    1. Log into Envault
+    2. Navigate to your app and select the environment
+    3. Copy the setup command shown under "Set up this app" and run it
+
+  Pull environment variables:
+    keystone env pull <envName>
+
+  List configured environments:
+    keystone env list
