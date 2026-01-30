@@ -1,37 +1,10 @@
 projects:
-  - name: Auth System
+  - name: Recordings App
     milestones:
-      kickoff: 2026-02-07
-      software: 2026-02-17
-      meeting: 2026-02-21
-      launch: 2026-03-01
-  - name: Dashboard Redesign
-    milestones:
-      kickoff: 2026-02-10
-      software: 2026-03-03
-      meeting: 2026-03-07
-      integration: 2026-03-14
-      launch: 2026-03-21
-  - name: API v2
-    milestones:
-      kickoff: 2026-02-24
-      poc_delivery: 2026-03-10
-      software: 2026-03-24
-      meeting: 2026-03-28
-      integration: 2026-04-07
-      launch: 2026-04-14
-  - name: Mobile App
-    milestones:
-      kickoff: 2026-03-17
-      software: 2026-04-21
-      meeting: 2026-04-25
-      launch: 2026-05-05
-  - name: adam's project
-    milestones:
-      kickoff: 2026-03-05
-      software: 2026-03-12
-      meeting: 2026-03-19
-      poc_delivery: 2026-03-26
-      integration: 2026-04-02
-      launch: 2026-04-09
-      iteration: 2026-04-16
+      kickoff: 2026-03-04
+      software: 2026-03-18
+      meeting: 2026-02-25
+      poc_delivery: 2026-03-02
+      integration: 2026-03-04
+      launch: 2026-03-09
+      iteration: 2026-03-23
