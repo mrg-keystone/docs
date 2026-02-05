@@ -2,13 +2,13 @@
 
 ## Test
 
-• Is an executable specification
-• Formatted as: Noun.Verb -> State / Fault
-• Reads as: `${Noun} should be ${State}` / `${Noun} should be ${Fault}`
-• Applied as a requirement (e2e test) or assertion (unit test)
-• Fault is omitted in requirements, required in assertions
-• Faults originate at the step level; assertions inherit them
-• Fault names should describe why something didn't succeed, not just that it didn't
+- Is an executable specification
+- Formatted as: Noun.Verb -> State / Fault
+- Reads as: `${Noun} should be ${State}` / `${Noun} should be ${Fault}`
+- Applied as a requirement (e2e test) or assertion (unit test)
+- Fault is omitted in requirements, required in assertions
+- Faults originate at the step level; assertions inherit them
+- Fault names should describe why something didn't succeed, not just that it didn't
 
 | notation                                    | english                         |
 | ------------------------------------------- | ------------------------------- |
@@ -21,9 +21,9 @@
 
 ## Requirements
 
-• Are applied as e2e tests
-• Happy path only; faults are defined in steps
-• Are broken down into steps
+- Are applied as e2e tests
+- Happy path only; faults are defined in steps
+- Are broken down into steps
 
 | requirement                        | comment                       |
 | ---------------------------------- | ----------------------------- |
@@ -37,11 +37,11 @@
 
 ## Steps
 
-• Are implementation details, not tests
-• Are derived from requirements
-• Formatted as Noun.Verb(args): return-type / fault
-• Fault is optional; omit for steps that cannot fail
-• Suffix DTOs (external input that must be validated) with dto; leave internal types unsuffixed.
+- Are implementation details, not tests
+- Are derived from requirements
+- Formatted as Noun.Verb(args): return-type / fault
+- Fault is optional; omit for steps that cannot fail
+- Suffix DTOs (external input that must be validated) with dto; leave internal types unsuffixed.
 
 | step                                                            | comment                 |
 | --------------------------------------------------------------- | ----------------------- |
@@ -55,10 +55,10 @@
 
 ## Assertions
 
-• Are applied as unit tests
-• Are derived from steps
-• Fault is required; each assertion tests one outcome
-• Do not use the words `and` or `or`
+- Are applied as unit tests
+- Are derived from steps
+- Fault is required; each assertion tests one outcome
+- Do not use the words `and` or `or`
 
 | assertion                                   | statement                                  |
 | ------------------------------------------- | ------------------------------------------ |
