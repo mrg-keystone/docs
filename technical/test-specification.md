@@ -74,3 +74,41 @@ Args ending in `Dto` are external inputs requiring validation. Internal args (pa
 - Fault names describe _why_ something didn't succeed (not just "failed")
 - Each fault implies a test case
 - Steps with no faults cannot fail
+
+## Traced Example
+
+```
+[REQ] recording.set(getRecordingDto): RecordingSetResponseDto
+    id.build(provider, externalRecordingId): internalRecordingId
+      not-valid-provider
+    provider.get(externalRecordingId): recordingData
+    [GENIE]
+      ex:search(...): url
+        not-found
+        timeout
+      ex:download(url): recordingData
+        not-found
+        timeout
+    [FIVE_NINE]
+      ex:search(...): url
+        not-found
+        timeout
+      ex:download(url): recordingData
+        not-found
+        timeout
+    [READYMODE]
+      ex:search(...): url
+        not-found
+        timeout
+      ex:download(url): recordingData
+        not-found
+        timeout
+    db:metadata.set(internalRecordingId, metadata): void
+      timeout
+      network-error
+    os:storage.save(internalRecordingId, recordingData): void
+      timeout
+      network-error
+```
+
+`recording.set` has 4 steps. The `provider.get` step is polymorphic with 3 concretes, each having 2 sub-steps and 4 faults. The 2 remaining steps have 2 faults each. Total: 1 + (3 x 4) + 2 + 2 = 17 faults, yielding 4 happy-path + 17 fault-path = 21 test cases.
