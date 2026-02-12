@@ -112,3 +112,9 @@ Args ending in `Dto` are external inputs requiring validation. Internal args (pa
 ```
 
 `recording.set` has 4 steps. The `provider.get` step is polymorphic with 3 concretes, each having 2 sub-steps and 4 faults. The 2 remaining steps have 2 faults each. Total: 1 + (3 x 4) + 2 + 2 = 17 faults, yielding 4 happy-path + 17 fault-path = 21 test cases.
+
+## File Conventions
+
+- File named `requirements` (no extension)
+- Indentation: 4 spaces for steps, 6 spaces for faults
+- No blank lines between steps; double blank line between requirements
