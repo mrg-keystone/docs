@@ -39,6 +39,30 @@ Defines the notation used in `requirements` files.
 
 Example: `db:metadata.set(internalRecordingId, metadata): void`
 
+### Polymorphic steps
+
+When a step Noun names an interface rather than a concrete class, the step is polymorphic. The interface line declares the signature at step indent (4 spaces). Concrete implementations are listed below it as `[UPPER_CASE]` at step indent (4 spaces). Each concrete carries its own sub-steps (6 spaces) and faults (8 spaces).
+
+```
+    provider.get(externalRecordingId): recordingData
+    [GENIE]
+      ex:search(...): url
+        not-found
+        timeout
+      ex:download(url): recordingData
+        not-found
+        timeout
+    [FIVE_NINE]
+      ex:search(...): url
+        not-found
+```
+
+- The interface line has no faults of its own
+- `[UPPER_CASE]` at 4-space indent declares a concrete implementation
+- Sub-steps under each concrete are indented 4 spaces
+- Faults on sub-steps are indented 6 spaces
+- Each concrete can have different sub-steps; they only share the interface return type
+
 ### Dto suffix
 
 Args ending in `Dto` are external inputs requiring validation. Internal args (passed between steps) have no suffix.
