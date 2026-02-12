@@ -24,6 +24,21 @@ Defines the notation used in `requirements` files.
 - No blank lines between steps within a requirement
 - Double blank line between requirements
 
+### Boundary tags
+
+2-char colon prefix on steps that cross a system boundary. Business logic steps stay untagged.
+
+| Tag  | Boundary                       |
+| ---- | ------------------------------ |
+| `db` | database / persistence         |
+| `fs` | file system (local)            |
+| `mq` | message queue                  |
+| `ex` | external service / provider    |
+| `os` | object storage (S3, GCS, etc.) |
+| `lg` | logs                           |
+
+Example: `db:metadata.set(internalRecordingId, metadata): void`
+
 ### Dto suffix
 
 Args ending in `Dto` are external inputs requiring validation. Internal args (passed between steps) have no suffix.
