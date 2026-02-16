@@ -3,11 +3,7 @@
       not-valid-provider
     provider.get(externalRecordingId): recordingData
     [GENIE]
-    ex:provider.search({
-      genieAcctId: string,
-      genieAcctPass: string
-      },
-      id: string): UrlDto[] | Array<UrlDto>
+    ex:provider.search(GenieCredentialsDto, id: string): UrlDto[] | Array<UrlDto>
       not-found
       timed-out
     ex:provider.download(UrlDto): recordingBinaryData
@@ -47,3 +43,14 @@
     db:metadata.set(internalRecordingId, metadata): void
       timed-out
       network-error
+
+
+[DTO] GenieCredentialsDto {
+  genieAcctId: string, genieAcctPass: string,
+  providerName: string, externalRecordingId: string,
+  genieAcctPass: string,
+},
+
+[DTO] UrlDto {
+  value: string
+}
