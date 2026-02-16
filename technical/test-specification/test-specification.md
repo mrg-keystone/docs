@@ -75,24 +75,37 @@ Define a DTO shape inline using curly braces:
 {prop:type, prop:type}
 ```
 
-- No name, just the shape
 - Comma-separated fields
 - Nested DTOs allowed: `{user:{id:string, name:string}, timestamp:int}`
 - Multi-line allowed for readability
 
-Examples:
+Example:
 
 ```
 [REQ] recording.set({provider:string, externalId:string}): {internalId:string, status:string}
 ```
 
+## DTO Definition
+
+Define reusable DTOs at the end of the file using `[DTO]` blocks:
+
 ```
-    ex:search({
-      genieAcctId: string,
-      genieAcctPass: string
-      },
-      id: string): UrlDto
+[DTO] GenieCredentialsDto {
+  genieAcctId: string, genieAcctPass: string,
+  providerName: string, externalRecordingId: string,
+}
+
+[DTO] UrlDto {
+  value: string
+}
 ```
+
+- Format: `[DTO] DtoName {props}`
+- Name must end in `Dto`
+- Multi-line, multi-column layout allowed
+- Trailing comma allowed
+- Defined after all requirements
+- Referenced by name in requirements and steps
 
 ## Fault
 
@@ -116,6 +129,6 @@ See `./requirements` for a complete example demonstrating:
 - REQ lines with DTO inputs and outputs
 - Steps with boundary prefixes (`ex:`, `db:`, `os:`)
 - Polymorphic step with `[GENIE]` concrete
-- Multi-line inline DTO
 - Union return type (`UrlDto[] | Array<UrlDto>`)
 - Faults under steps
+- DTO definitions with `[DTO]` blocks
