@@ -120,7 +120,7 @@ Define named types with descriptions using `[TYP]` blocks:
     endpoint that match the external recording ID
 ```
 
-- Format: `[TYP] name:type` followed by description
+- Format: `[TYP] name: type` followed by description
 - Description starts at column 5 (aligned with `]`)
 - Description max 80 chars wide; wraps to next line at same indent
 - `Primitive` is a built-in alias for `string | number | boolean`

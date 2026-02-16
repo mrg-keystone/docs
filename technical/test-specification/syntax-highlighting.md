@@ -150,13 +150,12 @@ boundary_line
     └── type_name "search"                   → grey
 ```
 
-Lines 65-69: DTO definition block
+Lines 65-68: DTO definition block
 
 ```
 [DTO] GenieCredentialsDto {
   genieAcctId: string, genieAcctPass: string,
   providerName: string, externalRecordingId: string,
-  genieAcctPass: string,
 }
 ```
 
