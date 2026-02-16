@@ -47,14 +47,14 @@ When a step Noun names an interface rather than a concrete class, the step is po
     provider.get(externalRecordingId): recordingData
     [GENIE]
       ex:search(...): url
-        not-found
-        timeout
+        !not-found
+        !timeout
       ex:download(url): recordingData
-        not-found
-        timeout
+        !not-found
+        !timeout
     [FIVE_NINE]
       ex:search(...): url
-        not-found
+        !not-found
 ```
 
 - The interface line has no faults of its own
@@ -101,17 +101,38 @@ Define reusable DTOs at the end of the file using `[DTO]` blocks:
 ```
 
 - Format: `[DTO] DtoName {props}`
+- One space required before `{`
 - Name must end in `Dto`
+- Properties must be primitives only (`string`, `number`, `boolean`)
 - Multi-line, multi-column layout allowed
 - Trailing comma allowed
+- Empty DTOs valid: `[DTO] EmptyDto {}`
 - Defined after all requirements
 - Referenced by name in requirements and steps
 
+## Type Definition
+
+Define named types with descriptions using `[TYP]` blocks:
+
+```
+[TYP] search: UrlDto[]
+    a list of URLs returned by the provider's search
+    endpoint that match the external recording ID
+```
+
+- Format: `[TYP] name:type` followed by description
+- Description starts at column 5 (aligned with `]`)
+- Description max 80 chars wide; wraps to next line at same indent
+- `Primitive` is a built-in alias for `string | number | boolean`
+- All TypeScript built-in types valid (`Record`, `ReturnType`, etc.)
+- Can reference DTOs (e.g., `UrlDto[]`)
+
 ## Fault
 
+- Prefixed with `!` marker (e.g., `!not-found`, `!timeout`)
 - Indented 6 spaces (2 deeper than parent step)
-- One fault per line
-- Fault names are lowercase, optionally hyphenated (e.g., `not-found`, `timeout`, `network-error`)
+- Up to two faults per line
+- Fault names are lowercase, optionally hyphenated (e.g., `!not-found`, `!timeout`, `!network-error`)
 - Fault names describe _why_ something didn't succeed (not just "failed")
 - Each fault implies a test case
 - Steps with no faults cannot fail
@@ -129,6 +150,6 @@ See `./requirements` for a complete example demonstrating:
 - REQ lines with DTO inputs and outputs
 - Steps with boundary prefixes (`ex:`, `db:`, `os:`)
 - Polymorphic step with `[GENIE]` concrete
-- Union return type (`UrlDto[] | Array<UrlDto>`)
 - Faults under steps
+- Type definitions with `[TYP]` blocks
 - DTO definitions with `[DTO]` blocks
