@@ -4,14 +4,14 @@ Editor syntax highlighting for `requirements` files.
 
 ## Color Scheme
 
-| Color | Elements                                                          |
-| ----- | ----------------------------------------------------------------- |
-| gold  | `[REQ]`, `[TYP]`, concrete tags, primitive types (`string`, `void`) |
-| blue  | DTO references (`*Dto`)                                           |
-| teal  | nouns and verbs (`noun.verb`)                                     |
-| grey  | params, property names, TYP names, TYP descriptions               |
-| green | boundary prefixes (`db:`, `ex:`, `os:`, etc.)                     |
-| coral | faults (`!name`), brackets (`{}`, `[]`, `<>`)                     |
+| Color | Elements                                                             |
+| ----- | -------------------------------------------------------------------- |
+| gold  | `[REQ]`, `[DTO]`, `[TYP]`, concrete tags, primitive types (`string`) |
+| blue  | DTO references (`*Dto`)                                              |
+| teal  | nouns and verbs (`noun.verb`)                                        |
+| grey  | params, property names, TYP names                                    |
+| green | boundary prefixes (`db:`, `ex:`, `os:`, etc.)                        |
+| coral | faults (`!name`), brackets (`{}`, `[]`, `<>`)                        |
 
 Grey is the default for identifiers. Blue overrides grey when the identifier ends in `Dto`. Gold overrides grey for primitive types.
 
@@ -42,7 +42,8 @@ The parser must produce these node types for highlights.scm to target:
 | `typ_tag`         | `[TYP]`                                     | gold   |
 | `typ_name`        | name before `:`                             | grey   |
 | `typ_type`        | type after `:`                              | gold   |
-| `typ_desc`        | description lines                           | grey   |
+| `typ_array_type`  | array type like `UrlDto[]`                  | gold   |
+| `typ_generic_type`| generic like `Record<K, V>`                 | gold   |
 
 ### Punctuation
 
@@ -69,7 +70,8 @@ The parser must produce these node types for highlights.scm to target:
 | `typ_tag`         | `@keyword`             | Keyword              |
 | `typ_name`        | `@variable.parameter`  | variable.parameter   |
 | `typ_type`        | `@type`                | Type                 |
-| `typ_desc`        | `@comment`             | Comment              |
+| `typ_array_type`  | `@punctuation.special` | Special (brackets)   |
+| `typ_generic_type`| `@punctuation.special` | Special (brackets)   |
 | `{}` `[]` `<>`    | `@punctuation.special` | Special              |
 
 ### Expected AST
@@ -150,7 +152,7 @@ boundary_line
     └── type_name "search"                   → grey
 ```
 
-Lines 65-68: DTO definition block
+Lines 52-55: DTO definition block
 
 ```
 [DTO] GenieCredentialsDto {
@@ -223,21 +225,38 @@ boundary_line
     └── type_name "void"                     → grey
 ```
 
-Lines 40-42: Type definition block
+Line 38: Type definition with array type
 
 ```
 [TYP] search: UrlDto[]
-    a list of URLs returned by the provider's search
-    endpoint that match the external recording ID
 ```
 
 ```
 typ_definition
 ├── typ_tag "[TYP]"                          → gold
 ├── typ_name "search"                        → grey
-├── typ_type "UrlDto[]"                      → gold
-└── typ_desc
-    ├── "a list of URLs returned by the provider's search"
-    └── "endpoint that match the external recording ID"
-                                             → grey
+└── typ_type
+    └── typ_array_type
+        ├── dto_reference "UrlDto"           → blue
+        ├── "["                              → coral
+        └── "]"                              → coral
+```
+
+Line 43: Type definition with generic type
+
+```
+[TYP] metadata: Record<string, Primitive>
+```
+
+```
+typ_definition
+├── typ_tag "[TYP]"                          → gold
+├── typ_name "metadata"                      → grey
+└── typ_type
+    └── typ_generic_type
+        ├── type_name "Record"               → gold
+        ├── "<"                              → coral
+        ├── type_name "string"               → gold
+        ├── type_name "Primitive"            → gold
+        └── ">"                              → coral
 ```

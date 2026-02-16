@@ -112,19 +112,19 @@ Define reusable DTOs at the end of the file using `[DTO]` blocks:
 
 ## Type Definition
 
-Define named types with descriptions using `[TYP]` blocks:
+Define named types using `[TYP]` blocks:
 
 ```
+[TYP] id: string
 [TYP] search: UrlDto[]
-    a list of URLs returned by the provider's search
-    endpoint that match the external recording ID
+[TYP] metadata: Record<string, Primitive>
 ```
 
-- Format: `[TYP] name: type` followed by description
-- Description starts at column 5 (aligned with `]`)
-- Description max 80 chars wide; wraps to next line at same indent
+- Format: `[TYP] name: type`
 - `Primitive` is a built-in alias for `string | number | boolean`
 - All TypeScript built-in types valid (`Record`, `ReturnType`, etc.)
+- Array types: `UrlDto[]`
+- Generic types: `Record<string, Primitive>`
 - Can reference DTOs (e.g., `UrlDto[]`)
 
 ## Fault
