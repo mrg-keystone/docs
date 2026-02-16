@@ -1,0 +1,49 @@
+[REQ] recording.set(getRecordingDto): RecordingSetResponseDto
+    id.build(providerName, externalRecordingId): internalRecordingId
+      not-valid-provider
+    provider.get(externalRecordingId): recordingData
+    [GENIE]
+    ex:provider.search({
+      genieAcctId: string,
+      genieAcctPass: string
+      },
+      id: string): UrlDto[] | Array<UrlDto>
+      not-found
+      timed-out
+    ex:provider.download(UrlDto): recordingBinaryData
+      not-found
+      timed-out
+    db:metadata.set(internalRecordingId: number, metadata): void
+      timed-out
+      network-error
+    os:storage.save(
+    internalRecordingId,
+    recordingData: boolean
+    ): void
+      timed-out
+      network-error
+
+
+[REQ] recording.get(getRecordingDto): RecordingDto
+    id.build(providerName, externalRecordingId): internalRecordingId
+      not-valid-provider
+    os:storage.load(internalRecordingId): recordingData
+      not-found
+      timed-out
+      network-error
+    db:metadata.get(internalRecordingId): metadata
+      not-found
+      timed-out
+      network-error
+
+
+[REQ] recording.addMetadata(addMetadataDto): addMetadataResponseDto
+    id.build(provider, externalRecordingId): internalRecordingId
+      not-valid-provider
+    db:metadata.get(internalRecordingId): metadata
+      not-found
+      timed-out
+      network-error
+    db:metadata.set(internalRecordingId, metadata): void
+      timed-out
+      network-error

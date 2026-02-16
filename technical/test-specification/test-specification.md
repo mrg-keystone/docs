@@ -67,54 +67,55 @@ When a step Noun names an interface rather than a concrete class, the step is po
 
 Args ending in `Dto` are external inputs requiring validation. Internal args (passed between steps) have no suffix.
 
+### Inline DTO
+
+Define a DTO shape inline using curly braces:
+
+```
+{prop:type, prop:type}
+```
+
+- No name, just the shape
+- Comma-separated fields
+- Nested DTOs allowed: `{user:{id:string, name:string}, timestamp:int}`
+- Multi-line allowed for readability
+
+Examples:
+
+```
+[REQ] recording.set({provider:string, externalId:string}): {internalId:string, status:string}
+```
+
+```
+    ex:search({
+      genieAcctId: string,
+      genieAcctPass: string
+      },
+      id: string): UrlDto
+```
+
 ## Fault
 
 - Indented 6 spaces (2 deeper than parent step)
 - One fault per line
+- Fault names are lowercase, optionally hyphenated (e.g., `not-found`, `timeout`, `network-error`)
 - Fault names describe _why_ something didn't succeed (not just "failed")
 - Each fault implies a test case
 - Steps with no faults cannot fail
-
-## Traced Example
-
-```
-[REQ] recording.set(getRecordingDto): RecordingSetResponseDto
-    id.build(provider, externalRecordingId): internalRecordingId
-      not-valid-provider
-    provider.get(externalRecordingId): recordingData
-    [GENIE]
-      ex:search(...): url
-        not-found
-        timeout
-      ex:download(url): recordingData
-        not-found
-        timeout
-    [FIVE_NINE]
-      ex:search(...): url
-        not-found
-        timeout
-      ex:download(url): recordingData
-        not-found
-        timeout
-    [READYMODE]
-      ex:search(...): url
-        not-found
-        timeout
-      ex:download(url): recordingData
-        not-found
-        timeout
-    db:metadata.set(internalRecordingId, metadata): void
-      timeout
-      network-error
-    os:storage.save(internalRecordingId, recordingData): void
-      timeout
-      network-error
-```
-
-`recording.set` has 4 steps. The `provider.get` step is polymorphic with 3 concretes, each having 2 sub-steps and 4 faults. The 2 remaining steps have 2 faults each. Total: 1 + (3 x 4) + 2 + 2 = 17 faults, yielding 4 happy-path + 17 fault-path = 21 test cases.
 
 ## File Conventions
 
 - File named `requirements` (no extension)
 - Indentation: 4 spaces for steps, 6 spaces for faults
 - No blank lines between steps; double blank line between requirements
+
+## Traced Example
+
+See `./requirements` for a complete example demonstrating:
+
+- REQ lines with DTO inputs and outputs
+- Steps with boundary prefixes (`ex:`, `db:`, `os:`)
+- Polymorphic step with `[GENIE]` concrete
+- Multi-line inline DTO
+- Union return type (`UrlDto[] | Array<UrlDto>`)
+- Faults under steps
