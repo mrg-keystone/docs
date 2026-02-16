@@ -4,14 +4,14 @@ Editor syntax highlighting for `requirements` files.
 
 ## Color Scheme
 
-| Color | Elements                                                   |
-| ----- | ---------------------------------------------------------- |
-| gold  | `[REQ]`, concrete tags, primitive types (`string`, `void`) |
-| blue  | DTO references (`*Dto`)                                    |
-| teal  | nouns and verbs (`noun.verb`)                              |
-| grey  | params, property names                                     |
-| green | boundary prefixes (`db:`, `ex:`, `os:`, etc.)              |
-| coral | faults, brackets (`{}`, `[]`, `<>`)                        |
+| Color | Elements                                                          |
+| ----- | ----------------------------------------------------------------- |
+| gold  | `[REQ]`, `[TYP]`, concrete tags, primitive types (`string`, `void`) |
+| blue  | DTO references (`*Dto`)                                           |
+| teal  | nouns and verbs (`noun.verb`)                                     |
+| grey  | params, property names, TYP names, TYP descriptions               |
+| green | boundary prefixes (`db:`, `ex:`, `os:`, etc.)                     |
+| coral | faults (`!name`), brackets (`{}`, `[]`, `<>`)                     |
 
 Grey is the default for identifiers. Blue overrides grey when the identifier ends in `Dto`. Gold overrides grey for primitive types.
 
@@ -33,10 +33,16 @@ The parser must produce these node types for highlights.scm to target:
 | `type_name`       | return type identifiers                     | grey   |
 | `property_name`   | prop names inside `{}`                      | grey   |
 | `boundary_prefix` | `db:`, `ex:`, `os:`, `fs:`, `mq:`, `lg:`    | green  |
-| `fault_name`      | `not-found`, `timed-out`, etc. (kebab-case) | coral  |
+| `fault_line`      | container for one or more faults            | —      |
+| `fault_marker`    | `!` prefix                                  | coral  |
+| `fault_name`      | `not-found`, `timeout`, etc. after `!`      | coral  |
 | `inline_dto`      | region inside `{}`                          | —      |
 | `dto_tag`         | `[DTO]`                                     | gold   |
 | `dto_def_name`    | DTO name after `[DTO]` tag                  | blue   |
+| `typ_tag`         | `[TYP]`                                     | gold   |
+| `typ_name`        | name before `:`                             | grey   |
+| `typ_type`        | type after `:`                              | gold   |
+| `typ_desc`        | description lines                           | grey   |
 
 ### Punctuation
 
@@ -56,16 +62,21 @@ The parser must produce these node types for highlights.scm to target:
 | `property_name`   | `@variable.parameter`  | variable.parameter   |
 | `type_name`       | `@variable.parameter`  | variable.parameter   |
 | `boundary_prefix` | `@keyword.modifier`    | Keyword              |
+| `fault_marker`    | `@punctuation.special` | Special              |
 | `fault_name`      | `@error`               | Error                |
 | `dto_tag`         | `@keyword`             | Keyword              |
 | `dto_def_name`    | `@type.builtin`        | type.builtin         |
+| `typ_tag`         | `@keyword`             | Keyword              |
+| `typ_name`        | `@variable.parameter`  | variable.parameter   |
+| `typ_type`        | `@type`                | Type                 |
+| `typ_desc`        | `@comment`             | Comment              |
 | `{}` `[]` `<>`    | `@punctuation.special` | Special              |
 
 ### Expected AST
 
 Based on `./requirements`:
 
-Line 1: `[REQ] recording.set(getRecordingDto): RecordingSetResponseDto`
+Line 1: `[REQ] recording.set(GetRecordingDto): RecordingSetResponseDto`
 
 ```
 req_line
@@ -74,29 +85,44 @@ req_line
 │   ├── identifier "recording"               → blue
 │   └── method_name "set"                    → blue
 ├── parameters
-│   └── dto_reference "getRecordingDto"      → purple
+│   └── dto_reference "GetRecordingDto"      → purple
 └── return_type
     └── dto_reference "RecordingSetResponseDto" → purple
 ```
 
-Line 2: `    id.build(providerName, externalRecordingId): internalRecordingId`
+Line 2: `    id.create(providerName, externalId): internalId`
 
 ```
 step_line
 ├── signature
 │   ├── identifier "id"                      → blue
-│   └── method_name "build"                  → blue
+│   └── method_name "create"                 → blue
 ├── parameters
 │   ├── param_name "providerName"            → grey
-│   └── param_name "externalRecordingId"     → grey
+│   └── param_name "externalId"              → grey
 └── return_type
-    └── type_name "internalRecordingId"      → grey
+    └── type_name "internalId"               → grey
 ```
 
-Line 3: `      not-valid-provider`
+Line 3: `      !not-valid-provider`
 
 ```
-fault_name "not-valid-provider"              → red
+fault_line
+└── fault
+    ├── fault_marker "!"                     → coral
+    └── fault_name "not-valid-provider"      → coral
+```
+
+Line 7: `      !not-found !timed-out` (multi-fault line)
+
+```
+fault_line
+├── fault
+│   ├── fault_marker "!"                     → coral
+│   └── fault_name "not-found"               → coral
+└── fault
+    ├── fault_marker "!"                     → coral
+    └── fault_name "timed-out"               → coral
 ```
 
 Line 5: `    [GENIE]`
@@ -105,10 +131,10 @@ Line 5: `    [GENIE]`
 concrete_tag "[GENIE]"                       → purple
 ```
 
-Line 6: Boundary step with DTO reference and union return type
+Line 6: Boundary step with DTO reference
 
 ```
-    ex:provider.search(GenieCredentialsDto, id: string): UrlDto[] | Array<UrlDto>
+    ex:provider.search(GenieCredentialsDto, externalId): search
 ```
 
 ```
@@ -119,24 +145,18 @@ boundary_line
 │   └── method_name "search"                 → teal
 ├── parameters
 │   ├── dto_reference "GenieCredentialsDto"  → blue
-│   └── typed_param
-│       ├── param_name "id"                  → grey
-│       └── type_name "string"               → gold
+│   └── param_name "externalId"              → grey
 └── return_type
-    ├── dto_reference "UrlDto"               → blue
-    ├── "[]"                                 → coral
-    ├── type_name "Array"                    → gold
-    ├── "<"                                  → coral
-    ├── dto_reference "UrlDto"               → blue
-    └── ">"                                  → coral
+    └── type_name "search"                   → grey
 ```
 
-Lines 48-52: DTO definition block
+Lines 65-69: DTO definition block
 
 ```
 [DTO] GenieCredentialsDto {
   genieAcctId: string, genieAcctPass: string,
   providerName: string, externalRecordingId: string,
+  genieAcctPass: string,
 }
 ```
 
@@ -160,7 +180,7 @@ dto_definition
 └── "}"                                      → coral
 ```
 
-Line 13: `    ex:provider.download(UrlDto): recordingBinaryData`
+Line 9: `    ex:provider.download(UrlDto): BinaryData`
 
 ```
 boundary_line
@@ -171,10 +191,25 @@ boundary_line
 ├── parameters
 │   └── dto_reference "UrlDto"               → purple
 └── return_type
-    └── type_name "recordingBinaryData"      → grey
+    └── type_name "BinaryData"               → grey
 ```
 
-Line 16: `    db:metadata.set(internalRecordingId, metadata): void`
+### Multi-line Steps
+
+Steps can span multiple lines when parameters are long. The parser tracks parentheses depth to continue parsing until the closing `)`:
+
+```
+    os:storage.save(
+        internalRecordingId,
+        recordingData: boolean
+    ): void
+```
+
+The LSP parser emits `MultilineContinuation` for continuation lines, preserving expected indentation from the opening line.
+
+---
+
+Line 11: `    db:metadata.set(internalId, metadata): void`
 
 ```
 boundary_line
@@ -183,8 +218,27 @@ boundary_line
 │   ├── identifier "metadata"                → blue
 │   └── method_name "set"                    → blue
 ├── parameters
-│   ├── param_name "internalRecordingId"     → grey
+│   ├── param_name "internalId"              → grey
 │   └── param_name "metadata"                → grey
 └── return_type
     └── type_name "void"                     → grey
+```
+
+Lines 40-42: Type definition block
+
+```
+[TYP] search: UrlDto[]
+    a list of URLs returned by the provider's search
+    endpoint that match the external recording ID
+```
+
+```
+typ_definition
+├── typ_tag "[TYP]"                          → gold
+├── typ_name "search"                        → grey
+├── typ_type "UrlDto[]"                      → gold
+└── typ_desc
+    ├── "a list of URLs returned by the provider's search"
+    └── "endpoint that match the external recording ID"
+                                             → grey
 ```
