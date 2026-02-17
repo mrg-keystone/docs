@@ -4,25 +4,88 @@ Defines the notation used in `requirements` files.
 
 ## Requirement
 
-- Format: `[REQ] Noun.Verb(inputDto): OutputDto`
+- Format: `[REQ] noun.verb(InputDto): OutputDto`
+- Input **must** be a DTO (ends in `Dto`) or inline `{}`
+- Output **must** be a DTO (ends in `Dto`)
+- Last step of REQ **must** return the REQ's output DTO
 - Represents the happy-path outcome (e2e test)
-- Input args use `Dto` suffix (external input needing validation)
-- Return type is the output DTO (PascalCase)
 - Faults live under steps, not on the REQ line
 - One requirement per feature entry point
 
 ```
-[REQ] recording.set(getRecordingDto): RecordingSetResponseDto
-[REQ] recording.get(getRecordingDto): RecordingDto
-[REQ] recording.add-metadata(addMetadataDto): addMetadataResponseDto
+[REQ] recording.set(GetRecordingDto): RecordingSetResponseDto
+[REQ] recording.get(GetRecordingDto): RecordingDto
+[REQ] recording.addMetadata(AddMetadataDto): AddMetadataResponseDto
 ```
 
 ## Step
 
 - Indented 4 spaces under parent requirement
-- Format: `Noun.Verb(args): return-type`
+- Format: `noun.verb(args): return-type`
+- Args and return types can be types or DTOs
 - No blank lines between steps within a requirement
 - Double blank line between requirements
+
+### Static vs Instance methods
+
+Use `.` for instance methods and `::` for static methods:
+
+```
+    provider.getRecording(externalId): data         // instance method
+    provider::pick(providerName): provider          // static method
+```
+
+**Instance methods** (`noun.verb()`):
+- Operates on an instance
+- `noun` must be returned by a previous step (in scope)
+
+**Static methods** (`noun::verb()`):
+- Class-level operation, no instance needed
+- `noun` does NOT need to be in scope
+
+The noun casing matches its `[TYP]` definition. If the type is defined as `[TYP] provider: Class`, use `provider::` for static calls and `provider.` for instance calls.
+
+**Scope rules:**
+```
+    provider::pick(name): provider    // static - no scope check
+    provider.getRecording(id): data   // instance - 'provider' must be in scope
+    data.transform(): result          // instance - 'data' must be in scope
+```
+
+Each step's return value is added to scope for subsequent steps.
+
+### Constructor shorthand
+
+Use `class::cotr` to instantiate a class:
+
+```
+    metadata::cotr
+    storage::cotr
+```
+
+- No parentheses, no return type
+- Return type is always the class itself (implied)
+- Adds the class name to scope for subsequent steps
+- Signature intentionally unspecified - constructor details are implementation concerns
+
+This keeps design specs focused on flow, not construction details.
+
+### Built-in return step
+
+Use `return(value)` to return a value created earlier in the flow. This is useful when the last operation is a side effect (like saving to DB) but you need to return a DTO created earlier:
+
+```
+    id::create(providerName, externalId): id
+    id.toDto(): IdDto                    // create the DTO to return
+    db:metadata.set(id, metadata): void  // side effect - returns void
+    os:storage.save(id, data): void      // side effect - returns void
+    return(IdDto)                        // return the DTO created earlier
+```
+
+- Format: `return(value)`
+- `value` must be in scope (returned by a previous step)
+- Sets the step output to `value` (satisfies REQ output requirement)
+- No class or instance required - it's a built-in
 
 ### Boundary tags
 
@@ -37,31 +100,36 @@ Defines the notation used in `requirements` files.
 | `os` | object storage (S3, GCS, etc.) |
 | `lg` | logs                           |
 
-Example: `db:metadata.set(internalRecordingId, metadata): void`
+**Boundary constraints:** Parameters and return types must be DTOs or primitives (`string`, `number`, `boolean`, `void`, `Uint8Array`). Custom types are not allowed at system boundaries.
+
+Example: `ex:provider.search(IdDto): UrlDto`
 
 ### Polymorphic steps
 
-When a step Noun names an interface rather than a concrete class, the step is polymorphic. The interface line declares the signature at step indent (4 spaces). Concrete implementations are listed below it as `[UPPER_CASE]` at step indent (4 spaces). Each concrete carries its own sub-steps (6 spaces) and faults (8 spaces).
+When a step Noun names an interface rather than a concrete class, the step is polymorphic. Use `--` delimiters to mark the polymorphic block. Concrete implementations are listed inside as `[UPPER_CASE]` tags.
 
 ```
-    provider.get(externalRecordingId): recordingData
-    [GENIE]
-      ex:search(...): url
+    provider.getRecording(externalId): data
+      --
+      [GENIE]
+      ex:provider.search(externalId): SearchDto
+        !not-found !timed-out
+      ex:provider.download(UrlDto): DataDto
+        !not-found !timed-out
+      [FIVE_NINE]
+      ex:other.search(externalId): SearchDto
         !not-found
-        !timeout
-      ex:download(url): recordingData
-        !not-found
-        !timeout
-    [FIVE_NINE]
-      ex:search(...): url
-        !not-found
+      --
+    db:metadata.set(IdDto, MetadataDto): void
 ```
 
-- The interface line has no faults of its own
-- `[UPPER_CASE]` at 4-space indent declares a concrete implementation
-- Sub-steps under each concrete are indented 4 spaces
-- Faults on sub-steps are indented 6 spaces
-- Each concrete can have different sub-steps; they only share the interface return type
+- Interface step at 4 spaces (normal step indent)
+- `--` at 6 spaces opens/closes the poly block (2 extra indent)
+- `[UPPER_CASE]` concrete tags at 6 spaces
+- Sub-steps inside poly block at 6 spaces
+- Faults on sub-steps at 8 spaces
+- After closing `--`, flow continues at 4 spaces
+- Each concrete can have different sub-steps; they share the interface return type
 
 ### Dto suffix
 
@@ -76,56 +144,94 @@ Define a DTO shape inline using curly braces:
 ```
 
 - Comma-separated fields
-- Nested DTOs allowed: `{user:{id:string, name:string}, timestamp:int}`
+- Properties reference types (not primitives)
+- Nested DTOs allowed: `{user:{id:id, name:name}, timestamp:timestamp}`
 - Multi-line allowed for readability
 
 Example:
 
 ```
-[REQ] recording.set({provider:string, externalId:string}): {internalId:string, status:string}
+[REQ] recording.set({provider:provider, externalId:externalId}): {internalId:internalId, status:status}
 ```
+
+## Type Definition
+
+Define named types using `[TYP]` blocks. Types are the primitive building blocks:
+
+```
+[TYP] id: string
+[TYP] provider: Class
+[TYP] metadata: Record<string, Primitive>
+```
+
+- Format: `[TYP] name: primitive`
+- Built-in primitives: `string`, `number`, `boolean`, `void`, `Uint8Array`, `Class`
+- `Primitive` is a built-in alias for `string | number | boolean`
+- `Class` indicates a class type (use `::` for static methods, `.` for instance methods after returned)
+- Generic types allowed: `Array<url>`, `Record<string, Primitive>`
+- Tuple types allowed: `[id, name]`, `[x, y, z]`
+- Types give semantic meaning to primitives (e.g., `id` vs raw `string`)
+- Types that resolve to primitives (e.g., `url: string`) are valid at system boundaries
+
+### Type Descriptions
+
+Types can include multi-line descriptions indented 4 spaces below the definition:
+
+```
+[TYP] storage: Class
+    a class representing the storage system used to save
+    and retrieve recording data
+
+[TYP] url: string
+    a URL string pointing to a resource
+```
+
+- Description lines are indented 4 spaces
+- Multiple lines are joined into a single description
+- Descriptions appear in LSP hover tooltips
+- Blank line ends the description block
 
 ## DTO Definition
 
-Define reusable DTOs at the end of the file using `[DTO]` blocks:
+Define reusable DTOs using `[DTO]` blocks. DTOs are composed of types:
 
 ```
 [DTO] GenieCredentialsDto {
-  genieAcctId: string, genieAcctPass: string,
-  providerName: string, externalRecordingId: string,
+  id, pass,
+  provider, externalId,
 }
 
 [DTO] UrlDto {
-  value: string
+  url
 }
 ```
 
 - Format: `[DTO] DtoName {props}`
 - One space required before `{`
 - Name must end in `Dto`
-- Properties must be primitives only (`string`, `number`, `boolean`)
+- Properties reference types or other DTOs (property name = type/DTO name)
+- DTOs can nest other DTOs (all ultimately resolve to primitives)
 - Multi-line, multi-column layout allowed
 - Trailing comma allowed
 - Empty DTOs valid: `[DTO] EmptyDto {}`
 - Defined after all requirements
 - Referenced by name in requirements and steps
 
-## Type Definition
+### Array properties
 
-Define named types using `[TYP]` blocks:
+Use parenthesized suffix to indicate an array of a type:
 
 ```
-[TYP] id: string
-[TYP] search: UrlDto[]
-[TYP] metadata: Record<string, Primitive>
+[DTO] SearchDto {
+  url(s)
+}
 ```
 
-- Format: `[TYP] name: type`
-- `Primitive` is a built-in alias for `string | number | boolean`
-- All TypeScript built-in types valid (`Record`, `ReturnType`, etc.)
-- Array types: `UrlDto[]`
-- Generic types: `Record<string, Primitive>`
-- Can reference DTOs (e.g., `UrlDto[]`)
+- `url(s)` → property name `urls`, type `Array<url>`
+- `address(es)` → property name `addresses`, type `Array<address>`
+- `child(ren)` → property name `children`, type `Array<child>`
+
+The base type (before parentheses) must be a defined `[TYP]`. The suffix in parentheses is appended to form the property name.
 
 ## Fault
 
@@ -137,11 +243,77 @@ Define named types using `[TYP]` blocks:
 - Each fault implies a test case
 - Steps with no faults cannot fail
 
+## Comments
+
+Inline comments use `//` syntax:
+
+```
+    provider.getRecording(externalId): data  // fetches from provider API
+    // This step handles the main retrieval
+    db:metadata.set(id, metadata): void
+```
+
+- Comments start with `//` and extend to end of line
+- Can appear on their own line or after code
+- Comments are ignored during validation
+
 ## File Conventions
 
 - File named `requirements` (no extension)
 - Indentation: 4 spaces for steps, 6 spaces for faults
 - No blank lines between steps; double blank line between requirements
+
+## Validation Rules
+
+The LSP enforces these rules:
+
+### Requirement validation
+- REQ input must be a DTO (ends in `Dto`) or inline `{}`
+- REQ output must be a DTO
+- Last step must return the REQ's output DTO
+
+### Scope validation
+- Instance methods (`noun.verb()`) require `noun` to be returned by a previous step
+- Static methods (`Noun::verb()`) have no scope requirements
+- Parameters must be in scope: either returned by a previous step OR provided by the REQ input DTO
+- REQ input DTO properties (including nested DTOs) are automatically in scope
+
+### Indentation validation
+- REQ at column 0
+- Steps at 4 spaces
+- Faults at 6 spaces (2 deeper than parent step)
+- Inside poly blocks: steps at 6 spaces, faults at 8 spaces
+- Poly markers (`--`) at 6 spaces
+
+### Boundary validation
+- Boundary parameters must be DTOs or primitives
+- Boundary return types must be DTOs or primitives
+- Concrete tags (`[TAG]`) must be inside poly blocks
+
+### Type validation
+- Parameters must reference defined types or DTOs
+- Return types must reference defined types, DTOs, or `void`
+
+### Signature consistency validation
+- The same `noun.verb` or `Noun::verb` must have identical signatures throughout the document
+- Parameters and return types must match across all calls to the same method
+- Error shows the first occurrence's signature for reference
+
+### Duplicate definition validation
+- Each `[TYP]` name must be unique
+- Each `[DTO]` name must be unique
+- Duplicate definitions generate errors referencing the first occurrence
+
+### Unused element validation
+- All defined types (`[TYP]`) must be used somewhere
+- All defined DTOs (`[DTO]`) must be used somewhere
+- Unused elements generate warnings
+
+### Constructor validation
+- `class::cotr` is the only valid constructor syntax
+- `class::cotr()` with parentheses generates an error
+- `class::cotr(): type` with return type generates an error
+- Constructor must reference a defined `[TYP]` with type `Class`
 
 ## Traced Example
 
