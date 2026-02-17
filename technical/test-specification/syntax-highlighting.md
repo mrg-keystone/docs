@@ -4,16 +4,16 @@ Editor syntax highlighting for `requirements` files.
 
 ## Color Scheme
 
-| Color | Elements                                                             |
-| ----- | -------------------------------------------------------------------- |
-| gold  | `[REQ]`, `[DTO]`, `[TYP]`, concrete tags, primitive types (`string`) |
+| Color | Elements                                                                    |
+| ----- | --------------------------------------------------------------------------- |
+| gold  | `[REQ]`, `[DTO]`, `[TYP]`, concrete tags, `--` poly markers, `return`, primitive types |
 | blue  | DTO references (`*Dto`)                                              |
 | teal  | nouns and verbs (`noun.verb`)                                        |
-| grey  | params, property names, TYP names                                    |
+| grey  | params, property names, TYP names, type references in DTOs, comments |
 | green | boundary prefixes (`db:`, `ex:`, `os:`, etc.)                        |
-| coral | faults (`!name`), brackets (`{}`, `[]`, `<>`)                        |
+| coral | faults (`!name`), brackets (`{}`, `[]` tuples, `<>`)                 |
 
-Grey is the default for identifiers. Blue overrides grey when the identifier ends in `Dto`. Gold overrides grey for primitive types.
+Grey is the default for identifiers. Blue overrides grey when the identifier ends in `Dto`. Gold overrides grey for primitive types in `[TYP]` definitions.
 
 ## Tree-sitter Parser
 
@@ -26,7 +26,8 @@ The parser must produce these node types for highlights.scm to target:
 | `req_tag`         | `[REQ]`                                     | purple |
 | `concrete_tag`    | `[GENIE]`, `[FIVE_NINE]`                    | purple |
 | `dto_reference`   | identifiers ending in `Dto`                 | purple |
-| `signature`       | `noun.verb` as a unit                       | —      |
+| `signature`       | `noun.verb` or `Noun::verb` as a unit       | —      |
+| `static_marker`   | `::` for static methods                     | teal   |
 | `identifier`      | noun (before dot)                           | blue   |
 | `method_name`     | verb (after dot)                            | blue   |
 | `param_name`      | parameter names inside `()`                 | grey   |
@@ -39,15 +40,23 @@ The parser must produce these node types for highlights.scm to target:
 | `inline_dto`      | region inside `{}`                          | —      |
 | `dto_tag`         | `[DTO]`                                     | gold   |
 | `dto_def_name`    | DTO name after `[DTO]` tag                  | blue   |
+| `dto_array_prop`  | array property base, e.g. `url` in `url(s)` | grey   |
+| `dto_array_suffix`| plural suffix `(s)`, `(es)`, `(ren)`        | coral  |
 | `typ_tag`         | `[TYP]`                                     | gold   |
 | `typ_name`        | name before `:`                             | grey   |
 | `typ_type`        | type after `:`                              | gold   |
-| `typ_array_type`  | array type like `UrlDto[]`                  | gold   |
-| `typ_generic_type`| generic like `Record<K, V>`                 | gold   |
+| `typ_generic_type`| generic like `Array<url>`, `Record<K, V>`   | gold   |
+| `typ_tuple_type`  | tuple like `[id, name]`                     | gold   |
+| `poly_marker`     | `--` polymorphic block delimiter            | gold   |
+| `return_keyword`  | `return` in `return(value)`                 | gold   |
+| `return_step`     | `return(value)` built-in step               | —      |
+| `cotr_keyword`    | `cotr` keyword in constructor shorthand     | gold   |
+| `cotr_step`       | `class::cotr` constructor step              | —      |
+| `comment`         | `// text` inline comments                   | grey   |
 
 ### Punctuation
 
-- `{` `}`, `[` `]`, `<` `>`, `(`, `)`, `:`, `,`, `|` → coral
+- `{` `}`, `[` `]`, `<` `>`, `(`, `)`, `:`, `::`, `,`, `|` → coral
 
 ### Treesitter Capture Groups
 
@@ -67,11 +76,17 @@ The parser must produce these node types for highlights.scm to target:
 | `fault_name`      | `@error`               | Error                |
 | `dto_tag`         | `@keyword`             | Keyword              |
 | `dto_def_name`    | `@type.builtin`        | type.builtin         |
+| `dto_array_prop`  | `@variable.parameter`  | variable.parameter   |
+| `dto_array_suffix`| `@punctuation.special` | Special              |
 | `typ_tag`         | `@keyword`             | Keyword              |
 | `typ_name`        | `@variable.parameter`  | variable.parameter   |
 | `typ_type`        | `@type`                | Type                 |
-| `typ_array_type`  | `@punctuation.special` | Special (brackets)   |
 | `typ_generic_type`| `@punctuation.special` | Special (brackets)   |
+| `typ_tuple_type`  | `@punctuation.special` | Special (brackets)   |
+| `poly_marker`     | `@keyword`             | Keyword              |
+| `return_keyword`  | `@keyword`             | Keyword              |
+| `cotr_keyword`    | `@keyword`             | Keyword              |
+| `comment`         | `@comment`             | Comment              |
 | `{}` `[]` `<>`    | `@punctuation.special` | Special              |
 
 ### Expected AST
@@ -106,6 +121,19 @@ step_line
     └── type_name "internalId"               → grey
 ```
 
+Line 15: `    metadata::cotr` (constructor shorthand)
+
+```
+cotr_step
+├── identifier "metadata"                    → blue
+├── static_marker "::"                       → teal
+└── cotr_keyword "cotr"                      → gold
+```
+
+- No parentheses or return type
+- Implicitly returns the class type
+- `cotr()` or `cotr(): type` are parse errors
+
 Line 3: `      !not-valid-provider`
 
 ```
@@ -127,16 +155,53 @@ fault_line
     └── fault_name "timed-out"               → coral
 ```
 
-Line 5: `    [GENIE]`
+Lines 6-14: Polymorphic block
 
 ```
-concrete_tag "[GENIE]"                       → purple
+    provider.getRecording(externalId): data       ← 4 spaces
+      --                                          ← 6 spaces
+      [GENIE]                                     ← 6 spaces
+      ex:provider.search(externalId): SearchDto   ← 6 spaces
+        !not-found !timed-out                     ← 8 spaces
+      ex:provider.download(UrlDto): DataDto       ← 6 spaces
+        !not-found !timed-out                     ← 8 spaces
+      --                                          ← 6 spaces
 ```
 
-Line 6: Boundary step with DTO reference
+```
+step_line
+├── signature
+│   ├── identifier "provider"               → teal
+│   └── method_name "getRecording"          → teal
+├── parameters
+│   └── param_name "externalId"             → grey
+└── return_type
+    └── type_name "data"                    → grey
+
+poly_marker "--"                             → gold
+
+concrete_tag "[GENIE]"                       → gold
+
+boundary_line
+├── boundary_prefix "ex:"                    → green
+├── signature
+│   ├── identifier "provider"                → teal
+│   └── method_name "search"                 → teal
+...
+
+poly_marker "--"                             → gold
+```
+
+Line 8: `    [GENIE]`
 
 ```
-    ex:provider.search(GenieCredentialsDto, externalId): search
+concrete_tag "[GENIE]"                       → gold
+```
+
+Line 9: Boundary step with DTO reference
+
+```
+    ex:provider.search(externalId): SearchDto
 ```
 
 ```
@@ -146,18 +211,17 @@ boundary_line
 │   ├── identifier "provider"                → teal
 │   └── method_name "search"                 → teal
 ├── parameters
-│   ├── dto_reference "GenieCredentialsDto"  → blue
 │   └── param_name "externalId"              → grey
 └── return_type
-    └── type_name "search"                   → grey
+    └── dto_reference "SearchDto"            → blue
 ```
 
-Lines 52-55: DTO definition block
+Lines 71-74: DTO definition block
 
 ```
 [DTO] GenieCredentialsDto {
-  genieAcctId: string, genieAcctPass: string,
-  providerName: string, externalRecordingId: string,
+  id, pass,
+  provider, externalId,
 }
 ```
 
@@ -166,33 +230,25 @@ dto_definition
 ├── dto_tag "[DTO]"                          → gold
 ├── dto_def_name "GenieCredentialsDto"       → blue
 ├── "{"                                      → coral
-├── dto_property
-│   ├── property_name "genieAcctId"          → grey
-│   └── type_name "string"                   → gold
-├── dto_property
-│   ├── property_name "genieAcctPass"        → grey
-│   └── type_name "string"                   → gold
-├── dto_property
-│   ├── property_name "providerName"         → grey
-│   └── type_name "string"                   → gold
-├── dto_property
-│   ├── property_name "externalRecordingId"  → grey
-│   └── type_name "string"                   → gold
+├── dto_property "id"                        → grey
+├── dto_property "pass"                      → grey
+├── dto_property "provider"                  → grey
+├── dto_property "externalId"                → grey
 └── "}"                                      → coral
 ```
 
-Line 9: `    ex:provider.download(UrlDto): BinaryData`
+Line 12: `    ex:provider.download(UrlDto): DataDto`
 
 ```
 boundary_line
 ├── boundary_prefix "ex:"                    → green
 ├── signature
-│   ├── identifier "provider"                → blue
-│   └── method_name "download"               → blue
+│   ├── identifier "provider"                → teal
+│   └── method_name "download"               → teal
 ├── parameters
-│   └── dto_reference "UrlDto"               → purple
+│   └── dto_reference "UrlDto"               → blue
 └── return_type
-    └── type_name "BinaryData"               → grey
+    └── dto_reference "DataDto"              → blue
 ```
 
 ### Multi-line Steps
@@ -225,10 +281,10 @@ boundary_line
     └── type_name "void"                     → grey
 ```
 
-Line 38: Type definition with array type
+Line 44: Type definition with array type
 
 ```
-[TYP] search: UrlDto[]
+[TYP] search: Array<url>
 ```
 
 ```
@@ -236,13 +292,14 @@ typ_definition
 ├── typ_tag "[TYP]"                          → gold
 ├── typ_name "search"                        → grey
 └── typ_type
-    └── typ_array_type
-        ├── dto_reference "UrlDto"           → blue
-        ├── "["                              → coral
-        └── "]"                              → coral
+    └── typ_generic_type
+        ├── type_name "Array"                → gold
+        ├── "<"                              → coral
+        ├── type_name "url"                  → gold
+        └── ">"                              → coral
 ```
 
-Line 43: Type definition with generic type
+Line 58: Type definition with generic type
 
 ```
 [TYP] metadata: Record<string, Primitive>
