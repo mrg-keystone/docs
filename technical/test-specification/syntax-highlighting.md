@@ -4,9 +4,9 @@ Editor syntax highlighting for `requirements` files.
 
 ## Color Scheme
 
-| Color | Elements                                                                    |
-| ----- | --------------------------------------------------------------------------- |
-| gold  | `[REQ]`, `[DTO]`, `[TYP]`, `[COTR]`, `[RETURN]`, concrete tags, `--` poly markers |
+| Color | Elements                                                             |
+| ----- | -------------------------------------------------------------------- |
+| gold  | `[REQ]`, `[DTO]`, `[TYP]`, `[PLY]`, `[CSE]`, `[CTR]`, `[RET]`        |
 | blue  | DTO references (`*Dto`)                                              |
 | teal  | nouns and verbs (`noun.verb`)                                        |
 | grey  | params, property names, TYP names, type references in DTOs, comments |
@@ -23,13 +23,18 @@ The parser must produce these node types for highlights.scm to target:
 
 | Node type         | Captures                                    | Color  |
 | ----------------- | ------------------------------------------- | ------ |
-| `req_tag`         | `[REQ]`                                     | purple |
-| `concrete_tag`    | `[GENIE]`, `[FIVE_NINE]`                    | purple |
-| `dto_reference`   | identifiers ending in `Dto`                 | purple |
+| `req_tag`         | `[REQ]`                                     | gold   |
+| `ply_tag`         | `[PLY]`                                     | gold   |
+| `cse_tag`         | `[CSE]`                                     | gold   |
+| `ctr_tag`         | `[CTR]`                                     | gold   |
+| `ret_tag`         | `[RET]`                                     | gold   |
+| `dto_tag`         | `[DTO]`                                     | gold   |
+| `typ_tag`         | `[TYP]`                                     | gold   |
+| `dto_reference`   | identifiers ending in `Dto`                 | blue   |
 | `signature`       | `noun.verb` or `Noun::verb` as a unit       | —      |
 | `static_marker`   | `::` for static methods                     | teal   |
-| `identifier`      | noun (before dot)                           | blue   |
-| `method_name`     | verb (after dot)                            | blue   |
+| `identifier`      | noun (before dot)                           | teal   |
+| `method_name`     | verb (after dot)                            | teal   |
 | `param_name`      | parameter names inside `()`                 | grey   |
 | `type_name`       | return type identifiers                     | grey   |
 | `property_name`   | prop names inside `{}`                      | grey   |
@@ -38,22 +43,19 @@ The parser must produce these node types for highlights.scm to target:
 | `fault_marker`    | `!` prefix                                  | coral  |
 | `fault_name`      | `not-found`, `timeout`, etc. after `!`      | coral  |
 | `inline_dto`      | region inside `{}`                          | —      |
-| `dto_tag`         | `[DTO]`                                     | gold   |
 | `dto_def_name`    | DTO name after `[DTO]` tag                  | blue   |
 | `dto_prop`        | property name after `:` in DTO definition   | grey   |
 | `dto_array_prop`  | array property base, e.g. `url` in `url(s)` | grey   |
 | `dto_array_suffix`| plural suffix `(s)`, `(es)`, `(ren)`        | coral  |
 | `dto_desc`        | description line (4-space indent after DTO) | grey   |
-| `typ_tag`         | `[TYP]`                                     | gold   |
 | `typ_name`        | name before `:`                             | grey   |
 | `typ_type`        | type after `:`                              | gold   |
 | `typ_generic_type`| generic like `Array<url>`, `Record<K, V>`   | gold   |
 | `typ_tuple_type`  | tuple like `[id, name]`                     | gold   |
-| `poly_marker`     | `--` polymorphic block delimiter            | gold   |
-| `return_tag`      | `[RETURN]` tag                              | gold   |
-| `return_step`     | `[RETURN] value` built-in step              | —      |
-| `cotr_tag`        | `[COTR]` tag                                | gold   |
-| `cotr_step`       | `[COTR] class` constructor step             | —      |
+| `ply_step`        | `[PLY] noun.verb(): type` polymorphic step  | —      |
+| `cse_step`        | `[CSE] name` case inside poly block         | —      |
+| `ctr_step`        | `[CTR] class` constructor step              | —      |
+| `ret_step`        | `[RET] value` return step                   | —      |
 | `comment`         | `// text` inline comments                   | grey   |
 
 ### Punctuation
@@ -65,8 +67,12 @@ The parser must produce these node types for highlights.scm to target:
 | Node type         | Capture                | Nvim highlight group |
 | ----------------- | ---------------------- | -------------------- |
 | `req_tag`         | `@keyword`             | Keyword              |
-| `concrete_tag`    | `@keyword`             | Keyword              |
-| `tag_name`        | `@keyword`             | Keyword              |
+| `ply_tag`         | `@keyword`             | Keyword              |
+| `cse_tag`         | `@keyword`             | Keyword              |
+| `ctr_tag`         | `@keyword`             | Keyword              |
+| `ret_tag`         | `@keyword`             | Keyword              |
+| `dto_tag`         | `@keyword`             | Keyword              |
+| `typ_tag`         | `@keyword`             | Keyword              |
 | `dto_reference`   | `@type.builtin`        | type.builtin         |
 | `identifier`      | `@function`            | Function             |
 | `method_name`     | `@function`            | Function             |
@@ -76,20 +82,15 @@ The parser must produce these node types for highlights.scm to target:
 | `boundary_prefix` | `@keyword.modifier`    | Keyword              |
 | `fault_marker`    | `@punctuation.special` | Special              |
 | `fault_name`      | `@error`               | Error                |
-| `dto_tag`         | `@keyword`             | Keyword              |
 | `dto_def_name`    | `@type.builtin`        | type.builtin         |
 | `dto_prop`        | `@variable.parameter`  | variable.parameter   |
 | `dto_array_prop`  | `@variable.parameter`  | variable.parameter   |
 | `dto_array_suffix`| `@punctuation.special` | Special              |
 | `dto_desc`        | `@comment`             | Comment              |
-| `typ_tag`         | `@keyword`             | Keyword              |
 | `typ_name`        | `@variable.parameter`  | variable.parameter   |
 | `typ_type`        | `@type`                | Type                 |
 | `typ_generic_type`| `@punctuation.special` | Special (brackets)   |
 | `typ_tuple_type`  | `@punctuation.special` | Special (brackets)   |
-| `poly_marker`     | `@keyword`             | Keyword              |
-| `return_tag`      | `@keyword`             | Keyword              |
-| `cotr_tag`        | `@keyword`             | Keyword              |
 | `comment`         | `@comment`             | Comment              |
 | `{}` `[]` `<>`    | `@punctuation.special` | Special              |
 
@@ -125,11 +126,11 @@ step_line
     └── type_name "internalId"               → grey
 ```
 
-Line 15: `    [COTR] metadata` (constructor shorthand)
+Line 17: `    [CTR] metadata` (constructor shorthand)
 
 ```
-cotr_step
-├── cotr_tag "[COTR]"                        → gold
+ctr_step
+├── ctr_tag "[CTR]"                          → gold
 └── identifier "metadata"                    → teal
 ```
 
@@ -158,32 +159,37 @@ fault_line
     └── fault_name "timed-out"               → coral
 ```
 
-Lines 6-14: Polymorphic block
+Lines 6-16: Polymorphic block
 
 ```
-    provider.getRecording(externalId): data       ← 4 spaces
-      --                                          ← 6 spaces
-      [GENIE]                                     ← 6 spaces
-      ex:provider.search(externalId): SearchDto   ← 6 spaces
-        !not-found !timed-out                     ← 8 spaces
-      ex:provider.download(UrlDto): DataDto       ← 6 spaces
-        !not-found !timed-out                     ← 8 spaces
-      --                                          ← 6 spaces
+    [PLY] provider.getRecording(externalId): data  ← 4 spaces
+        [CSE] genie                                ← 8 spaces
+        ex:provider.search(externalId): SearchDto  ← 8 spaces
+          !not-found !timed-out !invalid-id        ← 10 spaces
+        ex:provider.download(url): data            ← 8 spaces
+          !not-found !timed-out                    ← 10 spaces
+        [CSE] fiveNine                             ← 8 spaces
+        ex:provider.search(externalId): SearchDto  ← 8 spaces
+          !not-found !timed-out !invalid-id        ← 10 spaces
+        ex:provider.download(url): data            ← 8 spaces
+          !not-found !timed-out                    ← 10 spaces
+    [CTR] metadata                                 ← 4 spaces (ends poly)
 ```
 
 ```
-step_line
+ply_step
+├── ply_tag "[PLY]"                          → gold
 ├── signature
-│   ├── identifier "provider"               → teal
-│   └── method_name "getRecording"          → teal
+│   ├── identifier "provider"                → teal
+│   └── method_name "getRecording"           → teal
 ├── parameters
-│   └── param_name "externalId"             → grey
+│   └── param_name "externalId"              → grey
 └── return_type
-    └── type_name "data"                    → grey
+    └── type_name "data"                     → grey
 
-poly_marker "--"                             → gold
-
-concrete_tag "[GENIE]"                       → gold
+cse_step
+├── cse_tag "[CSE]"                          → gold
+└── identifier "genie"                       → teal
 
 boundary_line
 ├── boundary_prefix "ex:"                    → green
@@ -191,14 +197,14 @@ boundary_line
 │   ├── identifier "provider"                → teal
 │   └── method_name "search"                 → teal
 ...
-
-poly_marker "--"                             → gold
 ```
 
-Line 8: `    [GENIE]`
+Line 7: `        [CSE] genie`
 
 ```
-concrete_tag "[GENIE]"                       → gold
+cse_step
+├── cse_tag "[CSE]"                          → gold
+└── identifier "genie"                       → teal
 ```
 
 Line 9: Boundary step with DTO reference
@@ -219,25 +225,20 @@ boundary_line
     └── dto_reference "SearchDto"            → blue
 ```
 
-Lines 71-74: DTO definition block
+Lines 79-80: DTO definition
 
 ```
-[DTO] GenieCredentialsDto {
-  id, pass,
-  provider, externalId,
-}
+[DTO] SearchDto: url(s)
+    a list of URLs returned by provider search
 ```
 
 ```
 dto_definition
 ├── dto_tag "[DTO]"                          → gold
-├── dto_def_name "GenieCredentialsDto"       → blue
-├── "{"                                      → coral
-├── dto_property "id"                        → grey
-├── dto_property "pass"                      → grey
-├── dto_property "provider"                  → grey
-├── dto_property "externalId"                → grey
-└── "}"                                      → coral
+├── dto_def_name "SearchDto"                 → blue
+├── dto_array_prop "url"                     → grey
+├── dto_array_suffix "(s)"                   → coral
+└── dto_desc "a list of URLs..."             → grey
 ```
 
 Line 12: `    ex:provider.download(UrlDto): DataDto`

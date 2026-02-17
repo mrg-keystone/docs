@@ -3,21 +3,22 @@
       !not-valid-provider
     provider::pick(providerName): provider
       !not-found
-    provider.getRecording(externalId): data
-      {GENIE
-      ex:provider.search(externalId): SearchDto
-        !not-found !timed-out
-        !invalid-id
-      ex:provider.download(url): data
-        !not-found !timed-out
-      }{FIVE_NINE
-
-      }
-    [COTR] metadata
+    [PLY] provider.getRecording(externalId): data
+        [CSE] genie
+        ex:provider.search(externalId): SearchDto
+          !not-found !timed-out !invalid-id
+        ex:provider.download(url): data
+          !not-found !timed-out
+        [CSE] fiveNine
+        ex:provider.search(externalId): SearchDto
+          !not-found !timed-out !invalid-id
+        ex:provider.download(url): data
+          !not-found !timed-out
+    [CTR] metadata
     metadata.toDto(): MetadataDto
     db:metadata.set(IdDto, MetadataDto): void
       !timed-out !network-error
-    [COTR] storage
+    [CTR] storage
     os:storage.save(IdDto, data): void
       !timed-out !network-error
     id.toDto(): IdDto
@@ -26,15 +27,13 @@
 [REQ] recording.get(GetRecordingDto): RecordingDto
     id::create(providerName, externalId): id
       !not-valid-provider
-    [COTR] storage
+    [CTR] storage
     id.toDto(): IdDto
     os:storage.load(IdDto): DataDto
-      !not-found !timed-out
-      !network-error
-    [COTR] metadata
+      !not-found !timed-out !network-error
+    [CTR] metadata
     db:metadata.get(IdDto): MetadataDto
-      !not-found !timed-out
-      !network-error
+      !not-found !timed-out !network-error
     recording::create(DataDto, MetadataDto): recording
       !invalid-data !invalid-metadata
     recording.toDto(): RecordingDto
@@ -43,13 +42,12 @@
 [REQ] recording.setMetadata(SetMetadataDto): MetadataDto
     id::create(providerName, externalId): id
       !not-valid-provider
-    metadata::cotr
+    [CTR] metadata
     db:metadata.get(IdDto): MetadataDto
-      !not-found !timed-out
-      !network-error
+      !not-found !timed-out !network-error
     db:metadata.set(IdDto, MetadataDto): void
       !timed-out !network-error
-    return(MetadataDto)
+    [RET] MetadataDto
 
 
 [TYP] storage: Class

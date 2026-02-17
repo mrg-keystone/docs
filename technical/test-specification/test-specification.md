@@ -56,11 +56,11 @@ Each step's return value is added to scope for subsequent steps.
 
 ### Constructor shorthand
 
-Use `[COTR]` to instantiate a class:
+Use `[CTR]` to instantiate a class:
 
 ```
-    [COTR] metadata
-    [COTR] storage
+    [CTR] metadata
+    [CTR] storage
 ```
 
 - No parentheses, no return type
@@ -72,17 +72,17 @@ This keeps design specs focused on flow, not construction details.
 
 ### Built-in return step
 
-Use `[RETURN]` to return a value created earlier in the flow. This is useful when the last operation is a side effect (like saving to DB) but you need to return a DTO created earlier:
+Use `[RET]` to return a value created earlier in the flow. This is useful when the last operation is a side effect (like saving to DB) but you need to return a DTO created earlier:
 
 ```
     id::create(providerName, externalId): id
     id.toDto(): IdDto                    // create the DTO to return
     db:metadata.set(id, metadata): void  // side effect - returns void
     os:storage.save(id, data): void      // side effect - returns void
-    [RETURN] IdDto                       // return the DTO created earlier
+    [RET] IdDto                          // return the DTO created earlier
 ```
 
-- Format: `[RETURN] value`
+- Format: `[RET] value`
 - `value` must be in scope (returned by a previous step)
 - Sets the step output to `value` (satisfies REQ output requirement)
 - No class or instance required - it's a built-in
@@ -106,30 +106,29 @@ Example: `ex:provider.search(IdDto): UrlDto`
 
 ### Polymorphic steps
 
-When a step Noun names an interface rather than a concrete class, the step is polymorphic. Use `--` delimiters to mark the polymorphic block. Concrete implementations are listed inside as `[UPPER_CASE]` tags.
+When a step Noun names an interface rather than a concrete class, the step is polymorphic. Use `[PLY]` to mark the polymorphic step and `[CSE]` for each concrete case. Block scope is determined by indentation.
 
 ```
-    provider.getRecording(externalId): data
-      --
-      [GENIE]
-      ex:provider.search(externalId): SearchDto
-        !not-found !timed-out
-      ex:provider.download(UrlDto): DataDto
-        !not-found !timed-out
-      [FIVE_NINE]
-      ex:other.search(externalId): SearchDto
-        !not-found
-      --
-    db:metadata.set(IdDto, MetadataDto): void
+    [PLY] provider.getRecording(externalId): data
+        [CSE] genie
+        ex:provider.search(externalId): SearchDto
+          !not-found !timed-out !invalid-id
+        ex:provider.download(url): data
+          !not-found !timed-out
+        [CSE] fiveNine
+        ex:provider.search(externalId): SearchDto
+          !not-found !timed-out !invalid-id
+        ex:provider.download(url): data
+          !not-found !timed-out
+    [CTR] metadata
 ```
 
-- Interface step at 4 spaces (normal step indent)
-- `--` at 6 spaces opens/closes the poly block (2 extra indent)
-- `[UPPER_CASE]` concrete tags at 6 spaces
-- Sub-steps inside poly block at 6 spaces
-- Faults on sub-steps at 8 spaces
-- After closing `--`, flow continues at 4 spaces
-- Each concrete can have different sub-steps; they share the interface return type
+- `[PLY]` at 4 spaces opens a polymorphic block
+- `[CSE]` at 8 spaces defines each concrete case (camelCase name)
+- Steps inside cases at 8 spaces (same level as `[CSE]`)
+- Faults inside cases at 10 spaces (2 deeper than step)
+- Block ends when indentation returns to 4 spaces (no explicit closer)
+- Each case can have different sub-steps; they share the interface return type
 
 ### Dto suffix
 
@@ -234,8 +233,9 @@ The base type (before parentheses) must be a defined `[TYP]`. The suffix in pare
 ## Fault
 
 - Prefixed with `!` marker (e.g., `!not-found`, `!timeout`)
-- Indented 6 spaces (2 deeper than parent step)
-- Up to two faults per line
+- Indented 2 spaces deeper than parent step (6 spaces under normal steps, 10 spaces inside poly cases)
+- Multiple faults on single line, space-separated (e.g., `!not-found !timed-out !invalid-id`)
+- Line must not exceed 80 characters; wrap to next line if needed
 - Fault names are lowercase, optionally hyphenated (e.g., `!not-found`, `!timeout`, `!network-error`)
 - Fault names describe _why_ something didn't succeed (not just "failed")
 - Each fault implies a test case
@@ -258,6 +258,7 @@ Inline comments use `//` syntax:
 ## File Conventions
 
 - File named `requirements` (no extension)
+- Maximum 80 characters per line
 - Indentation: 4 spaces for steps, 6 spaces for faults
 - No blank lines between steps; double blank line between requirements
 
@@ -280,13 +281,14 @@ The LSP enforces these rules:
 - REQ at column 0
 - Steps at 4 spaces
 - Faults at 6 spaces (2 deeper than parent step)
-- Inside poly blocks: steps at 6 spaces, faults at 8 spaces
-- Poly markers (`--`) at 6 spaces
+- `[PLY]` at 4 spaces (step level)
+- `[CSE]` at 8 spaces (inside poly block)
+- Steps inside cases at 8 spaces
+- Faults inside cases at 10 spaces
 
 ### Boundary validation
 - Boundary parameters must be DTOs or primitives
 - Boundary return types must be DTOs or primitives
-- Concrete tags (`[TAG]`) must be inside poly blocks
 
 ### Type validation
 - Parameters must reference defined types or DTOs
@@ -308,7 +310,7 @@ The LSP enforces these rules:
 - Unused elements generate warnings
 
 ### Constructor validation
-- `[COTR] class` is the only valid constructor syntax
+- `[CTR] class` is the only valid constructor syntax
 - Constructor must reference a defined `[TYP]` with type `Class`
 
 ### DTO description validation
@@ -316,13 +318,27 @@ The LSP enforces these rules:
 - Description must be indented 4 spaces
 - Missing descriptions generate an error
 
+## Keyword Tags
+
+All keyword tags are exactly 3 letters inside brackets (`[XXX]`). This ensures content after the tag always starts at column 7, maintaining visual alignment.
+
+| Tag     | Purpose                          |
+| ------- | -------------------------------- |
+| `[REQ]` | Requirement definition           |
+| `[PLY]` | Polymorphic step                 |
+| `[CSE]` | Case inside polymorphic block    |
+| `[CTR]` | Constructor shorthand            |
+| `[RET]` | Return value from scope          |
+| `[TYP]` | Type definition                  |
+| `[DTO]` | DTO definition                   |
+
 ## Traced Example
 
 See `./requirements` for a complete example demonstrating:
 
 - REQ lines with DTO inputs and outputs
 - Steps with boundary prefixes (`ex:`, `db:`, `os:`)
-- Polymorphic step with `[GENIE]` concrete
+- Polymorphic step with `[PLY]` and `[CSE]` cases
 - Faults under steps
 - Type definitions with `[TYP]` blocks
 - DTO definitions with `[DTO]` blocks
