@@ -56,11 +56,11 @@ Each step's return value is added to scope for subsequent steps.
 
 ### Constructor shorthand
 
-Use `class::cotr` to instantiate a class:
+Use `[COTR]` to instantiate a class:
 
 ```
-    metadata::cotr
-    storage::cotr
+    [COTR] metadata
+    [COTR] storage
 ```
 
 - No parentheses, no return type
@@ -72,17 +72,17 @@ This keeps design specs focused on flow, not construction details.
 
 ### Built-in return step
 
-Use `return(value)` to return a value created earlier in the flow. This is useful when the last operation is a side effect (like saving to DB) but you need to return a DTO created earlier:
+Use `[RETURN]` to return a value created earlier in the flow. This is useful when the last operation is a side effect (like saving to DB) but you need to return a DTO created earlier:
 
 ```
     id::create(providerName, externalId): id
     id.toDto(): IdDto                    // create the DTO to return
     db:metadata.set(id, metadata): void  // side effect - returns void
     os:storage.save(id, data): void      // side effect - returns void
-    return(IdDto)                        // return the DTO created earlier
+    [RETURN] IdDto                       // return the DTO created earlier
 ```
 
-- Format: `return(value)`
+- Format: `[RETURN] value`
 - `value` must be in scope (returned by a previous step)
 - Sets the step output to `value` (satisfies REQ output requirement)
 - No class or instance required - it's a built-in
@@ -196,24 +196,23 @@ Types can include multi-line descriptions indented 4 spaces below the definition
 Define reusable DTOs using `[DTO]` blocks. DTOs are composed of types:
 
 ```
-[DTO] GenieCredentialsDto {
-  id, pass,
-  provider, externalId,
-}
+[DTO] UrlDto: url
+    a URL wrapper for external service responses
 
-[DTO] UrlDto {
-  url
-}
+[DTO] GetRecordingDto: providerName, externalId
+    input for retrieving a recording by provider and external ID
+
+[DTO] SearchDto: url(s)
+    a list of URLs returned by provider search
 ```
 
-- Format: `[DTO] DtoName {props}`
-- One space required before `{`
+- Format: `[DTO] DtoName: prop1, prop2, ...`
 - Name must end in `Dto`
+- Properties are comma-separated inline
 - Properties reference types or other DTOs (property name = type/DTO name)
+- Description required on next line, indented 4 spaces
 - DTOs can nest other DTOs (all ultimately resolve to primitives)
-- Multi-line, multi-column layout allowed
-- Trailing comma allowed
-- Empty DTOs valid: `[DTO] EmptyDto {}`
+- Blank line ends the description block
 - Defined after all requirements
 - Referenced by name in requirements and steps
 
@@ -222,9 +221,8 @@ Define reusable DTOs using `[DTO]` blocks. DTOs are composed of types:
 Use parenthesized suffix to indicate an array of a type:
 
 ```
-[DTO] SearchDto {
-  url(s)
-}
+[DTO] SearchDto: url(s)
+    URLs returned by provider search endpoint
 ```
 
 - `url(s)` → property name `urls`, type `Array<url>`
@@ -310,10 +308,13 @@ The LSP enforces these rules:
 - Unused elements generate warnings
 
 ### Constructor validation
-- `class::cotr` is the only valid constructor syntax
-- `class::cotr()` with parentheses generates an error
-- `class::cotr(): type` with return type generates an error
+- `[COTR] class` is the only valid constructor syntax
 - Constructor must reference a defined `[TYP]` with type `Class`
+
+### DTO description validation
+- Every `[DTO]` must have a description on the following line
+- Description must be indented 4 spaces
+- Missing descriptions generate an error
 
 ## Traced Example
 

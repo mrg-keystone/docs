@@ -6,7 +6,7 @@ Editor syntax highlighting for `requirements` files.
 
 | Color | Elements                                                                    |
 | ----- | --------------------------------------------------------------------------- |
-| gold  | `[REQ]`, `[DTO]`, `[TYP]`, concrete tags, `--` poly markers, `return`, primitive types |
+| gold  | `[REQ]`, `[DTO]`, `[TYP]`, `[COTR]`, `[RETURN]`, concrete tags, `--` poly markers |
 | blue  | DTO references (`*Dto`)                                              |
 | teal  | nouns and verbs (`noun.verb`)                                        |
 | grey  | params, property names, TYP names, type references in DTOs, comments |
@@ -40,18 +40,20 @@ The parser must produce these node types for highlights.scm to target:
 | `inline_dto`      | region inside `{}`                          | —      |
 | `dto_tag`         | `[DTO]`                                     | gold   |
 | `dto_def_name`    | DTO name after `[DTO]` tag                  | blue   |
+| `dto_prop`        | property name after `:` in DTO definition   | grey   |
 | `dto_array_prop`  | array property base, e.g. `url` in `url(s)` | grey   |
 | `dto_array_suffix`| plural suffix `(s)`, `(es)`, `(ren)`        | coral  |
+| `dto_desc`        | description line (4-space indent after DTO) | grey   |
 | `typ_tag`         | `[TYP]`                                     | gold   |
 | `typ_name`        | name before `:`                             | grey   |
 | `typ_type`        | type after `:`                              | gold   |
 | `typ_generic_type`| generic like `Array<url>`, `Record<K, V>`   | gold   |
 | `typ_tuple_type`  | tuple like `[id, name]`                     | gold   |
 | `poly_marker`     | `--` polymorphic block delimiter            | gold   |
-| `return_keyword`  | `return` in `return(value)`                 | gold   |
-| `return_step`     | `return(value)` built-in step               | —      |
-| `cotr_keyword`    | `cotr` keyword in constructor shorthand     | gold   |
-| `cotr_step`       | `class::cotr` constructor step              | —      |
+| `return_tag`      | `[RETURN]` tag                              | gold   |
+| `return_step`     | `[RETURN] value` built-in step              | —      |
+| `cotr_tag`        | `[COTR]` tag                                | gold   |
+| `cotr_step`       | `[COTR] class` constructor step             | —      |
 | `comment`         | `// text` inline comments                   | grey   |
 
 ### Punctuation
@@ -76,16 +78,18 @@ The parser must produce these node types for highlights.scm to target:
 | `fault_name`      | `@error`               | Error                |
 | `dto_tag`         | `@keyword`             | Keyword              |
 | `dto_def_name`    | `@type.builtin`        | type.builtin         |
+| `dto_prop`        | `@variable.parameter`  | variable.parameter   |
 | `dto_array_prop`  | `@variable.parameter`  | variable.parameter   |
 | `dto_array_suffix`| `@punctuation.special` | Special              |
+| `dto_desc`        | `@comment`             | Comment              |
 | `typ_tag`         | `@keyword`             | Keyword              |
 | `typ_name`        | `@variable.parameter`  | variable.parameter   |
 | `typ_type`        | `@type`                | Type                 |
 | `typ_generic_type`| `@punctuation.special` | Special (brackets)   |
 | `typ_tuple_type`  | `@punctuation.special` | Special (brackets)   |
 | `poly_marker`     | `@keyword`             | Keyword              |
-| `return_keyword`  | `@keyword`             | Keyword              |
-| `cotr_keyword`    | `@keyword`             | Keyword              |
+| `return_tag`      | `@keyword`             | Keyword              |
+| `cotr_tag`        | `@keyword`             | Keyword              |
 | `comment`         | `@comment`             | Comment              |
 | `{}` `[]` `<>`    | `@punctuation.special` | Special              |
 
@@ -121,18 +125,17 @@ step_line
     └── type_name "internalId"               → grey
 ```
 
-Line 15: `    metadata::cotr` (constructor shorthand)
+Line 15: `    [COTR] metadata` (constructor shorthand)
 
 ```
 cotr_step
-├── identifier "metadata"                    → blue
-├── static_marker "::"                       → teal
-└── cotr_keyword "cotr"                      → gold
+├── cotr_tag "[COTR]"                        → gold
+└── identifier "metadata"                    → teal
 ```
 
 - No parentheses or return type
 - Implicitly returns the class type
-- `cotr()` or `cotr(): type` are parse errors
+- Adds class name to scope
 
 Line 3: `      !not-valid-provider`
 

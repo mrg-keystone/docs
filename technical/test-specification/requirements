@@ -4,19 +4,20 @@
     provider::pick(providerName): provider
       !not-found
     provider.getRecording(externalId): data
-      --
-      [GENIE]
+      {GENIE
       ex:provider.search(externalId): SearchDto
         !not-found !timed-out
         !invalid-id
       ex:provider.download(url): data
         !not-found !timed-out
-      --
-    metadata::cotr
+      }{FIVE_NINE
+
+      }
+    [COTR] metadata
     metadata.toDto(): MetadataDto
     db:metadata.set(IdDto, MetadataDto): void
       !timed-out !network-error
-    storage::cotr
+    [COTR] storage
     os:storage.save(IdDto, data): void
       !timed-out !network-error
     id.toDto(): IdDto
@@ -25,12 +26,12 @@
 [REQ] recording.get(GetRecordingDto): RecordingDto
     id::create(providerName, externalId): id
       !not-valid-provider
-    storage::cotr
+    [COTR] storage
     id.toDto(): IdDto
     os:storage.load(IdDto): DataDto
       !not-found !timed-out
       !network-error
-    metadata::cotr
+    [COTR] metadata
     db:metadata.get(IdDto): MetadataDto
       !not-found !timed-out
       !network-error
@@ -77,31 +78,24 @@
     the binary data of the recording
 
 
-[DTO] SearchDto {
-  url(s)
-}
+[DTO] SearchDto: url(s)
+    a list of URLs returned by provider search
 
-[DTO] GetRecordingDto {
-  providerName, externalId,
-}
+[DTO] GetRecordingDto: providerName, externalId
+    input for retrieving a recording by provider and external ID
 
-[DTO] SetMetadataDto {
-    GetRecordingDto, MetadataDto
-}
+[DTO] SetMetadataDto: GetRecordingDto, MetadataDto
+    input for setting metadata on a recording
 
-[DTO] DataDto {
-    data
-}
+[DTO] DataDto: data
+    wrapper for binary recording data
 
-[DTO] MetadataDto {
-    metadata
-}
+[DTO] MetadataDto: metadata
+    wrapper for recording metadata
 
-[DTO] RecordingDto {
-    data, metadata
-}
+[DTO] RecordingDto: data, metadata
+    complete recording with data and metadata
 
-[DTO] IdDto {
-  providerName, externalId,
-}
+[DTO] IdDto: providerName, externalId
+    unique identifier combining provider and external ID
 
