@@ -4,16 +4,21 @@ Editor syntax highlighting for `requirements` files.
 
 ## Color Scheme
 
-| Color | Elements                                                             |
-| ----- | -------------------------------------------------------------------- |
-| gold  | `[REQ]`, `[DTO]`, `[TYP]`, `[PLY]`, `[CSE]`, `[CTR]`, `[RET]`        |
-| blue  | DTO references (`*Dto`)                                              |
-| teal  | nouns and verbs (`noun.verb`)                                        |
-| grey  | params, property names, TYP names, type references in DTOs, comments |
-| green | boundary prefixes (`db:`, `ex:`, `os:`, etc.)                        |
-| coral | faults, brackets (`{}`, `[]` tuples, `<>`)                           |
+| Hex       | Name   | Elements                                                  |
+| --------- | ------ | --------------------------------------------------------- |
+| `#E5C07B` | Amber  | Tags: `[REQ]`, `[DTO]`, `[TYP]`, `[PLY]`, `[CSE]`, `[CTR]`, `[RET]` |
+| `#61AFEF` | Blue   | DTO references (`*Dto`)                                   |
+| `#56B6C2` | Cyan   | Builtin types (`string`, `number`, `Class`, etc.)         |
+| `#98C379` | Sage   | Nouns (`noun.verb`, `Noun::verb`)                         |
+| `#C678DD` | Violet | Verbs (`noun.verb`, `Noun::verb`)                         |
+| `#ABB2BF` | Stone  | Params, properties, TYP names, comments                   |
+| `#D19A66` | Peach  | Boundary prefixes (`db:`, `ex:`, `os:`, etc.)             |
+| `#E06C75` | Coral  | Faults, brackets (`{}`, `[]`, `<>`)                       |                           |
 
-Grey is the default for identifiers. Blue overrides grey when the identifier ends in `Dto`. Gold overrides grey for primitive types in `[TYP]` definitions.
+**Color groupings:**
+- **Type system** (cool): Blue for DTO refs, Cyan for builtins
+- **Code flow** (complementary): Sage for nouns, Violet for verbs
+- **Structure** (warm): Amber for tags, Peach for boundaries, Coral for faults
 
 ## Tree-sitter Parser
 
@@ -23,39 +28,38 @@ The parser must produce these node types for highlights.scm to target:
 
 | Node type         | Captures                                    | Color  |
 | ----------------- | ------------------------------------------- | ------ |
-| `req_tag`         | `[REQ]`                                     | gold   |
-| `ply_tag`         | `[PLY]`                                     | gold   |
-| `cse_tag`         | `[CSE]`                                     | gold   |
-| `ctr_tag`         | `[CTR]`                                     | gold   |
-| `ret_tag`         | `[RET]`                                     | gold   |
-| `dto_tag`         | `[DTO]`                                     | gold   |
-| `typ_tag`         | `[TYP]`                                     | gold   |
+| `req_tag`         | `[REQ]`                                     | amber  |
+| `ply_tag`         | `[PLY]`                                     | amber  |
+| `cse_tag`         | `[CSE]`                                     | amber  |
+| `ctr_tag`         | `[CTR]`                                     | amber  |
+| `ret_tag`         | `[RET]`                                     | amber  |
+| `dto_tag`         | `[DTO]`                                     | amber  |
+| `typ_tag`         | `[TYP]`                                     | amber  |
 | `dto_reference`   | identifiers ending in `Dto`                 | blue   |
 | `signature`       | `noun.verb` or `Noun::verb` as a unit       | —      |
-| `static_marker`   | `::` for static methods                     | teal   |
-| `identifier`      | noun (before dot)                           | teal   |
-| `method_name`     | verb (after dot)                            | teal   |
-| `param_name`      | parameter names inside `()`                 | grey   |
-| `type_name`       | return type identifiers                     | grey   |
-| `property_name`   | prop names inside `{}`                      | grey   |
-| `boundary_prefix` | `db:`, `ex:`, `os:`, `fs:`, `mq:`, `lg:`    | green  |
+| `identifier`      | noun (before `.` or `::`)                   | sage   |
+| `method_name`     | verb (after `.` or `::`)                    | violet |
+| `param_name`      | parameter names inside `()`                 | stone  |
+| `type_name`       | return type identifiers                     | stone  |
+| `property_name`   | prop names inside `{}`                      | stone  |
+| `boundary_prefix` | `db:`, `ex:`, `os:`, `fs:`, `mq:`, `lg:`    | peach  |
 | `fault_line`      | container for one or more faults            | —      |
 | `fault_name`      | `not-found`, `timed-out`, etc.              | coral  |
 | `inline_dto`      | region inside `{}`                          | —      |
 | `dto_def_name`    | DTO name after `[DTO]` tag                  | blue   |
-| `dto_prop`        | property name after `:` in DTO definition   | grey   |
-| `dto_array_prop`  | array property base, e.g. `url` in `url(s)` | grey   |
-| `dto_array_suffix`| plural suffix `(s)`, `(es)`, `(ren)`        | coral  |
-| `dto_desc`        | description line (4-space indent after DTO) | grey   |
-| `typ_name`        | name before `:`                             | grey   |
-| `typ_type`        | type after `:`                              | gold   |
-| `typ_generic_type`| generic like `Array<url>`, `Record<K, V>`   | gold   |
-| `typ_tuple_type`  | tuple like `[id, name]`                     | gold   |
+| `dto_prop`        | property name after `:` in DTO definition   | stone  |
+| `dto_array_prop`  | array property base, e.g. `url` in `url(s)` | stone  |
+| `dto_array_suffix`| plural suffix `(s)`, `(es)`, `(ren)`        | stone  |
+| `dto_desc`        | description line (4-space indent after DTO) | stone  |
+| `typ_name`        | name before `:`                             | stone  |
+| `typ_type`        | type after `:` (builtin primitives)         | cyan   |
+| `typ_generic_type`| generic like `Array<url>`, `Record<K, V>`   | cyan   |
+| `typ_tuple_type`  | tuple like `[id, name]`                     | cyan   |
 | `ply_step`        | `[PLY] noun.verb(): type` polymorphic step  | —      |
 | `cse_step`        | `[CSE] name` case inside poly block         | —      |
 | `ctr_step`        | `[CTR] class` constructor step              | —      |
 | `ret_step`        | `[RET] value` return step                   | —      |
-| `comment`         | `// text` inline comments                   | grey   |
+| `comment`         | `// text` inline comments                   | stone  |
 
 ### Punctuation
 
@@ -63,34 +67,34 @@ The parser must produce these node types for highlights.scm to target:
 
 ### Treesitter Capture Groups
 
-| Node type         | Capture                | Nvim highlight group |
-| ----------------- | ---------------------- | -------------------- |
-| `req_tag`         | `@keyword`             | Keyword              |
-| `ply_tag`         | `@keyword`             | Keyword              |
-| `cse_tag`         | `@keyword`             | Keyword              |
-| `ctr_tag`         | `@keyword`             | Keyword              |
-| `ret_tag`         | `@keyword`             | Keyword              |
-| `dto_tag`         | `@keyword`             | Keyword              |
-| `typ_tag`         | `@keyword`             | Keyword              |
-| `dto_reference`   | `@type.builtin`        | type.builtin         |
-| `identifier`      | `@function`            | Function             |
-| `method_name`     | `@function`            | Function             |
-| `param_name`      | `@variable.parameter`  | variable.parameter   |
-| `property_name`   | `@variable.parameter`  | variable.parameter   |
-| `type_name`       | `@variable.parameter`  | variable.parameter   |
-| `boundary_prefix` | `@keyword.modifier`    | Keyword              |
-| `fault_name`      | `@error`               | Error                |
-| `dto_def_name`    | `@type.builtin`        | type.builtin         |
-| `dto_prop`        | `@variable.parameter`  | variable.parameter   |
-| `dto_array_prop`  | `@variable.parameter`  | variable.parameter   |
-| `dto_array_suffix`| `@punctuation.special` | Special              |
-| `dto_desc`        | `@comment`             | Comment              |
-| `typ_name`        | `@variable.parameter`  | variable.parameter   |
-| `typ_type`        | `@type`                | Type                 |
-| `typ_generic_type`| `@punctuation.special` | Special (brackets)   |
-| `typ_tuple_type`  | `@punctuation.special` | Special (brackets)   |
-| `comment`         | `@comment`             | Comment              |
-| `{}` `[]` `<>`    | `@punctuation.special` | Special              |
+| Node type         | Capture                | Color (hex)  |
+| ----------------- | ---------------------- | ------------ |
+| `req_tag`         | `@keyword`             | `#E5C07B`    |
+| `ply_tag`         | `@keyword`             | `#E5C07B`    |
+| `cse_tag`         | `@keyword`             | `#E5C07B`    |
+| `ctr_tag`         | `@keyword`             | `#E5C07B`    |
+| `ret_tag`         | `@keyword`             | `#E5C07B`    |
+| `dto_tag`         | `@keyword`             | `#E5C07B`    |
+| `typ_tag`         | `@keyword`             | `#E5C07B`    |
+| `dto_reference`   | `@type.builtin`        | `#61AFEF`    |
+| `identifier`      | `@lsp.type.class`      | `#98C379`    |
+| `method_name`     | `@function.method`     | `#C678DD`    |
+| `param_name`      | `@variable.parameter`  | `#ABB2BF`    |
+| `property_name`   | `@variable.parameter`  | `#ABB2BF`    |
+| `type_name`       | `@variable.parameter`  | `#ABB2BF`    |
+| `boundary_prefix` | `@attribute`           | `#D19A66`    |
+| `fault_name`      | `@error`               | `#E06C75`    |
+| `dto_def_name`    | `@type.builtin`        | `#61AFEF`    |
+| `dto_prop`        | `@variable.parameter`  | `#ABB2BF`    |
+| `dto_array_prop`  | `@variable.parameter`  | `#ABB2BF`    |
+| `dto_array_suffix`| `@variable.parameter`  | `#ABB2BF`    |
+| `dto_desc`        | `@comment`             | `#ABB2BF`    |
+| `typ_name`        | `@variable.parameter`  | `#ABB2BF`    |
+| `typ_type`        | `@type`                | `#56B6C2`    |
+| `typ_generic_type`| `@type`                | `#56B6C2`    |
+| `typ_tuple_type`  | `@type`                | `#56B6C2`    |
+| `comment`         | `@comment`             | `#ABB2BF`    |
+| `{}` `[]` `<>`    | `@punctuation.special` | `#E06C75`    |
 
 ### Expected AST
 
