@@ -11,7 +11,7 @@ Editor syntax highlighting for `requirements` files.
 | teal  | nouns and verbs (`noun.verb`)                                        |
 | grey  | params, property names, TYP names, type references in DTOs, comments |
 | green | boundary prefixes (`db:`, `ex:`, `os:`, etc.)                        |
-| coral | faults (`!name`), brackets (`{}`, `[]` tuples, `<>`)                 |
+| coral | faults, brackets (`{}`, `[]` tuples, `<>`)                           |
 
 Grey is the default for identifiers. Blue overrides grey when the identifier ends in `Dto`. Gold overrides grey for primitive types in `[TYP]` definitions.
 
@@ -40,8 +40,7 @@ The parser must produce these node types for highlights.scm to target:
 | `property_name`   | prop names inside `{}`                      | grey   |
 | `boundary_prefix` | `db:`, `ex:`, `os:`, `fs:`, `mq:`, `lg:`    | green  |
 | `fault_line`      | container for one or more faults            | —      |
-| `fault_marker`    | `!` prefix                                  | coral  |
-| `fault_name`      | `not-found`, `timeout`, etc. after `!`      | coral  |
+| `fault_name`      | `not-found`, `timed-out`, etc.              | coral  |
 | `inline_dto`      | region inside `{}`                          | —      |
 | `dto_def_name`    | DTO name after `[DTO]` tag                  | blue   |
 | `dto_prop`        | property name after `:` in DTO definition   | grey   |
@@ -80,7 +79,6 @@ The parser must produce these node types for highlights.scm to target:
 | `property_name`   | `@variable.parameter`  | variable.parameter   |
 | `type_name`       | `@variable.parameter`  | variable.parameter   |
 | `boundary_prefix` | `@keyword.modifier`    | Keyword              |
-| `fault_marker`    | `@punctuation.special` | Special              |
 | `fault_name`      | `@error`               | Error                |
 | `dto_def_name`    | `@type.builtin`        | type.builtin         |
 | `dto_prop`        | `@variable.parameter`  | variable.parameter   |
@@ -138,25 +136,20 @@ ctr_step
 - Implicitly returns the class type
 - Adds class name to scope
 
-Line 3: `      !not-valid-provider`
+Line 3: `      not-valid-provider`
 
 ```
 fault_line
-└── fault
-    ├── fault_marker "!"                     → coral
-    └── fault_name "not-valid-provider"      → coral
+└── fault_name "not-valid-provider"          → coral
 ```
 
-Line 7: `      !not-found !timed-out` (multi-fault line)
+Line 9: `          not-found timed-out invalid-id` (multi-fault line)
 
 ```
 fault_line
-├── fault
-│   ├── fault_marker "!"                     → coral
-│   └── fault_name "not-found"               → coral
-└── fault
-    ├── fault_marker "!"                     → coral
-    └── fault_name "timed-out"               → coral
+├── fault_name "not-found"                   → coral
+├── fault_name "timed-out"                   → coral
+└── fault_name "invalid-id"                  → coral
 ```
 
 Lines 6-16: Polymorphic block
@@ -165,14 +158,14 @@ Lines 6-16: Polymorphic block
     [PLY] provider.getRecording(externalId): data  ← 4 spaces
         [CSE] genie                                ← 8 spaces
         ex:provider.search(externalId): SearchDto  ← 8 spaces
-          !not-found !timed-out !invalid-id        ← 10 spaces
+          not-found timed-out invalid-id           ← 10 spaces
         ex:provider.download(url): data            ← 8 spaces
-          !not-found !timed-out                    ← 10 spaces
+          not-found timed-out                      ← 10 spaces
         [CSE] fiveNine                             ← 8 spaces
         ex:provider.search(externalId): SearchDto  ← 8 spaces
-          !not-found !timed-out !invalid-id        ← 10 spaces
+          not-found timed-out invalid-id           ← 10 spaces
         ex:provider.download(url): data            ← 8 spaces
-          !not-found !timed-out                    ← 10 spaces
+          not-found timed-out                      ← 10 spaces
     [CTR] metadata                                 ← 4 spaces (ends poly)
 ```
 

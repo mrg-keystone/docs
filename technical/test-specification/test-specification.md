@@ -112,14 +112,14 @@ When a step Noun names an interface rather than a concrete class, the step is po
     [PLY] provider.getRecording(externalId): data
         [CSE] genie
         ex:provider.search(externalId): SearchDto
-          !not-found !timed-out !invalid-id
+          not-found timed-out invalid-id
         ex:provider.download(url): data
-          !not-found !timed-out
+          not-found timed-out
         [CSE] fiveNine
         ex:provider.search(externalId): SearchDto
-          !not-found !timed-out !invalid-id
+          not-found timed-out invalid-id
         ex:provider.download(url): data
-          !not-found !timed-out
+          not-found timed-out
     [CTR] metadata
 ```
 
@@ -232,11 +232,10 @@ The base type (before parentheses) must be a defined `[TYP]`. The suffix in pare
 
 ## Fault
 
-- Prefixed with `!` marker (e.g., `!not-found`, `!timeout`)
 - Indented 2 spaces deeper than parent step (6 spaces under normal steps, 10 spaces inside poly cases)
-- Multiple faults on single line, space-separated (e.g., `!not-found !timed-out !invalid-id`)
+- Multiple faults on single line, space-separated (e.g., `not-found timed-out invalid-id`)
 - Line must not exceed 80 characters; wrap to next line if needed
-- Fault names are lowercase, optionally hyphenated (e.g., `!not-found`, `!timeout`, `!network-error`)
+- Fault names are lowercase, hyphen-separated (e.g., `not-found`, `timed-out`, `network-error`)
 - Fault names describe _why_ something didn't succeed (not just "failed")
 - Each fault implies a test case
 - Steps with no faults cannot fail

@@ -1,52 +1,52 @@
 [REQ] recording.register(GetRecordingDto): IdDto
     id::create(providerName, externalId): id
-      !not-valid-provider
+      not-valid-provider
     provider::pick(providerName): provider
-      !not-found
+      not-found
     [PLY] provider.getRecording(externalId): data
         [CSE] genie
         ex:provider.search(externalId): SearchDto
-          !not-found !timed-out !invalid-id
+          not-found timed-out invalid-id
         ex:provider.download(url): data
-          !not-found !timed-out
+          not-found timed-out
         [CSE] fiveNine
         ex:provider.search(externalId): SearchDto
-          !not-found !timed-out !invalid-id
+          not-found timed-out invalid-id
         ex:provider.download(url): data
-          !not-found !timed-out
+          not-found timed-out
     [CTR] metadata
     metadata.toDto(): MetadataDto
     db:metadata.set(IdDto, MetadataDto): void
-      !timed-out !network-error
+      timed-out network-error
     [CTR] storage
     os:storage.save(IdDto, data): void
-      !timed-out !network-error
+      timed-out network-error
     id.toDto(): IdDto
 
 
 [REQ] recording.get(GetRecordingDto): RecordingDto
     id::create(providerName, externalId): id
-      !not-valid-provider
+      not-valid-provider
     [CTR] storage
     id.toDto(): IdDto
     os:storage.load(IdDto): DataDto
-      !not-found !timed-out !network-error
+      not-found timed-out network-error
     [CTR] metadata
     db:metadata.get(IdDto): MetadataDto
-      !not-found !timed-out !network-error
+      not-found timed-out network-error
     recording::create(DataDto, MetadataDto): recording
-      !invalid-data !invalid-metadata
+      invalid-data invalid-metadata
     recording.toDto(): RecordingDto
 
 
 [REQ] recording.setMetadata(SetMetadataDto): MetadataDto
     id::create(providerName, externalId): id
-      !not-valid-provider
+      not-valid-provider
     [CTR] metadata
     db:metadata.get(IdDto): MetadataDto
-      !not-found !timed-out !network-error
+      not-found timed-out network-error
     db:metadata.set(IdDto, MetadataDto): void
-      !timed-out !network-error
+      timed-out network-error
     [RET] MetadataDto
 
 
