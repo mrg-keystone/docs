@@ -1,6 +1,6 @@
 [syntax-highlighting]
 
-Editor syntax highlighting for `requirements` files.
+Editor syntax highlighting for `.rune` files.
 
 ## Philosophy
 
@@ -77,7 +77,7 @@ Brackets are muted (`@punctuation.delimiter`):
 
 ### Expected AST
 
-Based on `./requirements`. Colored elements shown with arrows; unlabeled
+Based on `example.rune`. Colored elements shown with arrows; unlabeled
 nodes use default text color.
 
 Line 1: `[REQ] recording.register(GetRecordingDto): IdDto`
